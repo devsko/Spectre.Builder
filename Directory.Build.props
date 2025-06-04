@@ -3,9 +3,9 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <RepoRootPath>$(MSBuildThisFileDirectory)</RepoRootPath>
-    <UseArtifactsOutput>true</UseArtifactsOutput>
-    <ArtifactsPath>$(RepoRootPath)artifacts</ArtifactsPath>
-    <PackageOutputPath>$(RepoRootPath)artifacts\Packages\$(Configuration)\</PackageOutputPath>
+    <BaseIntermediateOutputPath>$(RepoRootPath)obj\$([MSBuild]::MakeRelative($(RepoRootPath), $(MSBuildProjectDirectory)))\</BaseIntermediateOutputPath>
+    <BaseOutputPath Condition=" '$(BaseOutputPath)' == '' ">$(RepoRootPath)bin\$(MSBuildProjectName)\</BaseOutputPath>
+    <PackageOutputPath>$(RepoRootPath)bin\Packages\$(Configuration)\</PackageOutputPath>
     <LangVersion>preview</LangVersion>
     <Features>strict</Features>
     <Nullable>enable</Nullable>

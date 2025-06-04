@@ -5,5 +5,6 @@
 <!--
 [![NuGet package](https://img.shields.io/nuget/v/Spectre.Builder.svg)](https://nuget.org/packages/Spectre.Builder)
 -->
+[![🏭 Build](https://github.com/devsko/Spectre.Builder/actions/workflows/build.yml/badge.svg)](https://github.com/devsko/Spectre.Builder/actions/workflows/build.yml)
 
 ## Features
