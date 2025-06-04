@@ -1,9 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <PackageId>devsko.Spectre.Builder</PackageId>
+    <Description>A library that simplifies downloading, converting and creating data files.</Description>
   </PropertyGroup>
+  
   <ItemGroup>
     <PackageReference Include="Spectre.Console" />
   </ItemGroup>
+
 </Project>
