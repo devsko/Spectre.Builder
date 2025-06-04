@@ -1,23 +1,39 @@
-﻿// Copyright © devsko 2025. All rights reserved.
-// Licensed under the MIT license.
+﻿// Copyright (c) devsko. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Diagnostics;
 
 namespace Spectre.Builder;
 
+/// <summary>
+/// Represents an abstract step that performs a conversion operation with progress tracking.
+/// </summary>
 public abstract class ConversionStep : Step, IStep
 {
     private IResource[]? _inputs;
     private IResource[]? _outputs;
 
+    /// <summary>
+    /// Gets the type of progress information to display for this step.
+    /// </summary>
     public virtual ProgressType Type => (ShowProgressValue ? ShowFileSizeProgress ? ProgressType.ValueDataSize : ProgressType.ValueRaw : 0) | ProgressType.NumericPercentage | ProgressType.ElapsedVisible;
 
+    /// <summary>
+    /// Gets a value indicating whether to show the progress value.
+    /// </summary>
     protected virtual bool ShowProgressValue => true;
 
+    /// <summary>
+    /// Gets a value indicating whether to show file size progress.
+    /// </summary>
     protected virtual bool ShowFileSizeProgress => true;
 
+    /// <summary>
+    /// Gets a value indicating whether to hide the step when skipped.
+    /// </summary>
     protected virtual bool HideWhenSkipped => false;
 
+    /// <inheritdoc/>
     public override bool ShouldShowProgress
     {
         get
@@ -30,6 +46,7 @@ public abstract class ConversionStep : Step, IStep
         }
     }
 
+    /// <inheritdoc/>
     void IStep.Prepare(StepContext context)
     {
         _inputs = [.. GetInputs()];
@@ -46,6 +63,7 @@ public abstract class ConversionStep : Step, IStep
         context.Level--;
     }
 
+    /// <inheritdoc/>
     async Task IStep.ExecuteAsync(StepContext context)
     {
         Debug.Assert(_inputs is not null);
@@ -95,8 +113,29 @@ public abstract class ConversionStep : Step, IStep
         context.EnsureValid();
     }
 
+    /// <summary>
+    /// Gets the input resources for this step.
+    /// </summary>
+    /// <returns>An enumerable of input resources.</returns>
     protected virtual IEnumerable<IResource> GetInputs() => [];
+
+    /// <summary>
+    /// Gets the output resources for this step.
+    /// </summary>
+    /// <returns>An enumerable of output resources.</returns>
     protected virtual IEnumerable<IResource> GetOutputs() => [];
+
+    /// <summary>
+    /// Gets the progress information items for this step.
+    /// </summary>
+    /// <returns>An enumerable of progress information items.</returns>
     protected virtual IEnumerable<ProgressInfo> GetProgressInfos() => [];
+
+    /// <summary>
+    /// Executes the conversion step asynchronously.
+    /// </summary>
+    /// <param name="context">The step context.</param>
+    /// <param name="timestamp">The timestamp when execution started.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     protected abstract Task ExecuteAsync(StepContext context, DateTime timestamp);
 }

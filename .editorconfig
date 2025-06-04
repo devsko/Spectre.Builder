@@ -167,6 +167,9 @@ csharp_new_line_before_members_in_anonymous_types = true
 # Blocks are allowed
 csharp_prefer_braces = true:silent
 
+# License header
+file_header_template = Copyright (c) devsko. All rights reserved.\nLicensed under the MIT license. See LICENSE file in the project root for full license information.
+
 # SA1130: Use lambda syntax
 dotnet_diagnostic.SA1130.severity = silent
 

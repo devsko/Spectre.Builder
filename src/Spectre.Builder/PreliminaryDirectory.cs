@@ -1,14 +1,22 @@
-﻿// Copyright © devsko 2025. All rights reserved.
-// Licensed under the MIT license.
+﻿// Copyright (c) devsko. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace Spectre.Builder;
 
+/// <summary>
+/// Represents a preliminary directory that can be persisted or discarded.
+/// </summary>
 public sealed class PreliminaryDirectory : IDisposable
 {
     private readonly string _path;
     private readonly DateTime _updateTime;
     private string? _tempPath;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PreliminaryDirectory"/> class.
+    /// </summary>
+    /// <param name="path">The target directory path to persist to.</param>
+    /// <param name="updateTime">The update time to set for the persisted directory.</param>
     public PreliminaryDirectory(string path, DateTime updateTime)
     {
         _path = path;
@@ -17,13 +25,24 @@ public sealed class PreliminaryDirectory : IDisposable
         Directory.CreateDirectory(_tempPath);
     }
 
+    /// <summary>
+    /// Finalizer for the <see cref="PreliminaryDirectory"/> class.
+    /// Ensures that resources are released if <see cref="Dispose()"/> was not called.
+    /// </summary>
     ~PreliminaryDirectory()
     {
         Dispose(false);
     }
 
+    /// <summary>
+    /// Gets the path of the preliminary directory.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown if the directory has already been disposed.</exception>
     public string Path => _tempPath ?? throw new InvalidOperationException();
 
+    /// <summary>
+    /// Persists the preliminary directory to the target path, replacing any existing directory.
+    /// </summary>
     public void Persist()
     {
         using (FileStream updateFile = File.Create(System.IO.Path.Combine(Path, DirectoryResource.UpdateFileName)))
@@ -52,6 +71,7 @@ public sealed class PreliminaryDirectory : IDisposable
         _tempPath = null;
     }
 
+    /// <inheritdoc/>
     public void Dispose()
     {
         Dispose(true);

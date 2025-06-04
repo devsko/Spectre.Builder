@@ -1,11 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0</TargetFrameworks>
-    <NoWarn>($NoWarn);CS1591</NoWarn>
+    <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
-  <ItemGroup>
-    <AdditionalFiles Remove="D:\repos\devsko\Spectre.Builder\stylecop.json" />
-  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Spectre.Console" />
   </ItemGroup>

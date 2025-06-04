@@ -3,14 +3,27 @@
 
 namespace Spectre.Builder;
 
+/// <summary>
+/// Represents a step that contains multiple sub-steps and progress information.
+/// </summary>
 public abstract class CompoundStep(IEnumerable<IStep> steps, IEnumerable<ProgressInfo>? progresses) : Step, IStep
 {
+    /// <summary>
+    /// Gets the list of sub-steps contained in this compound step.
+    /// </summary>
     protected List<IStep> Steps { get; } = [.. steps];
 
+    /// <summary>
+    /// Gets the list of progress information items associated with this compound step.
+    /// </summary>
     protected List<ProgressInfo> Progresses { get; } = [.. progresses ?? []];
 
+    /// <summary>
+    /// Gets the type of progress for this step.
+    /// </summary>
     public virtual ProgressType Type => ProgressType.NumericStep;
 
+    /// <inheritdoc/>
     void IStep.Prepare(StepContext context)
     {
         context.AddStep(this);
@@ -30,6 +43,7 @@ public abstract class CompoundStep(IEnumerable<IStep> steps, IEnumerable<Progres
         context.Level--;
     }
 
+    /// <inheritdoc/>
     async Task IStep.ExecuteAsync(StepContext context)
     {
         State = ProgressState.Running;
@@ -41,5 +55,10 @@ public abstract class CompoundStep(IEnumerable<IStep> steps, IEnumerable<Progres
         //context.SetComplete(this);
     }
 
+    /// <summary>
+    /// Executes the sub-steps asynchronously.
+    /// </summary>
+    /// <param name="context">The step context.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     protected abstract Task ExecuteStepsAsync(StepContext context);
 }

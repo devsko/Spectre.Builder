@@ -8,34 +8,63 @@ namespace Spectre.Builder;
 
 public partial class StepContext
 {
+    /// <summary>
+    /// Represents a base class for custom progress columns associated with a step context.
+    /// </summary>
+    /// <param name="context">The step context.</param>
     private abstract class StepProgressColumn(StepContext context) : ProgressColumn
     {
+        /// <summary>
+        /// Gets the step and its level from the progress task.
+        /// </summary>
+        /// <param name="task">The progress task.</param>
+        /// <returns>A tuple containing the step and its level.</returns>
         protected (IHasProgress Step, int Level) GetStepAndLevel(ProgressTask task)
         {
             return context._progresses[int.Parse(task.Description)];
         }
 
+        /// <inheritdoc/>
         public sealed override IRenderable Render(RenderOptions options, ProgressTask task, TimeSpan deltaTime)
         {
             (IHasProgress step, int level) = GetStepAndLevel(task);
             return Render(options, task, step, level, deltaTime);
         }
 
+        /// <summary>
+        /// Renders the column for the specified step and level.
+        /// </summary>
+        /// <param name="options">The render options.</param>
+        /// <param name="task">The progress task.</param>
+        /// <param name="step">The step.</param>
+        /// <param name="level">The level of the step.</param>
+        /// <param name="deltaTime">The time since the last render.</param>
+        /// <returns>The rendered column.</returns>
         protected abstract IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress step, int level, TimeSpan deltaTime);
     }
 
+    /// <summary>
+    /// Represents a column that displays the name of the step.
+    /// </summary>
+    /// <param name="context">The step context.</param>
     private sealed class NameColumn(StepContext context) : StepProgressColumn(context)
     {
+        /// <inheritdoc/>
         protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress step, int level, TimeSpan deltaTime)
         {
             return new Markup($"[conceal][/]{new string(' ', level * 2)}{step.Name}").Overflow(Overflow.Ellipsis);
         }
     }
 
+    /// <summary>
+    /// Represents a column that displays numerical progress information.
+    /// </summary>
+    /// <param name="context">The step context.</param>
     private sealed class NumericalProgress(StepContext context) : StepProgressColumn(context)
     {
         private static readonly Markup _empty = new("");
 
+        /// <inheritdoc/>
         protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress step, int level, TimeSpan deltaTime)
         {
             return ((step.State, step.Type & ProgressType.NumericMask) switch
@@ -50,16 +79,23 @@ public partial class StepContext
             }).RightJustified();
         }
 
+        /// <inheritdoc/>
         public override int? GetColumnWidth(RenderOptions options)
         {
             return 5;
         }
     }
 
+    /// <summary>
+    /// Represents a column that displays elapsed time for a step.
+    /// </summary>
+    /// <param name="context">The step context.</param>
     private sealed class ElapsedColumn(StepContext context) : StepProgressColumn(context)
     {
+        /// <inheritdoc/>
         protected override bool NoWrap => true;
 
+        /// <inheritdoc/>
         protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress step, int level, TimeSpan deltaTime)
         {
             return (step.State is ProgressState.Running or ProgressState.Done) &&
@@ -69,14 +105,20 @@ public partial class StepContext
                 : Text.Empty;
         }
 
+        /// <inheritdoc/>
         public override int? GetColumnWidth(RenderOptions options)
         {
             return 8;
         }
     }
 
+    /// <summary>
+    /// Represents a column that displays value information for a step.
+    /// </summary>
+    /// <param name="context">The step context.</param>
     private sealed class ValueColumn(StepContext context) : StepProgressColumn(context)
     {
+        /// <inheritdoc/>
         protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress step, int level, TimeSpan deltaTime)
         {
             if ((step.State is ProgressState.Running or ProgressState.Done || step is StatusInfo))
@@ -85,43 +127,41 @@ public partial class StepContext
                 switch (step.Type & ProgressType.ValueMask)
                 {
                     case ProgressType.ValueDataSize:
-                    {
-                        DataSize? total = double.IsPositiveInfinity(task.MaxValue) ? null : new((int)task.MaxValue);
-                        DataSize value = total is null ? new((int)task.Value) : new((int)task.Value, total.Value.Unit);
-                        string suffix = total is null ? value.Suffix : total.Value.Suffix;
+                        {
+                            DataSize? total = double.IsPositiveInfinity(task.MaxValue) ? null : new((int)task.MaxValue);
+                            DataSize value = total is null ? new((int)task.Value) : new((int)task.Value, total.Value.Unit);
+                            string suffix = total is null ? value.Suffix : total.Value.Suffix;
 
-                        result = step.State is ProgressState.Done or ProgressState.Skip
-                            ? new Markup($"{value.Format()} [grey]{suffix}[/]")
-                            : new Markup($"{(total is null ? value.Format() : $"{value.Format()}[grey]/[/]{total.Value.Format()}")} [grey]{suffix}[/]");
-                    }
-
-                    return result.RightJustified();
+                            result = step.State is ProgressState.Done or ProgressState.Skip
+                                ? new Markup($"{value.Format()} [grey]{suffix}[/]")
+                                : new Markup($"{(total is null ? value.Format() : $"{value.Format()}[grey]/[/]{total.Value.Format()}")} [grey]{suffix}[/]");
+                        }
+                        return result.RightJustified();
                     case ProgressType.ValueRaw:
-                    {
-                        if (step.State is ProgressState.Done or ProgressState.Skip)
                         {
-                            result = new Markup($"{(long)task.Value:N0}");
+                            if (step.State is ProgressState.Done or ProgressState.Skip)
+                            {
+                                result = new Markup($"{(long)task.Value:N0}");
+                            }
+                            else
+                            {
+                                long? total = double.IsPositiveInfinity(task.MaxValue) ? null : (long)task.MaxValue;
+                                result = new Markup(total is null ? $"{(long)task.Value:N0}" : $"{(long)task.Value:N0}[grey]/[/]{total.Value:N0}");
+                            }
                         }
-                        else
-                        {
-                            long? total = double.IsPositiveInfinity(task.MaxValue) ? null : (long)task.MaxValue;
-                            result = new Markup(total is null ? $"{(long)task.Value:N0}" : $"{(long)task.Value:N0}[grey]/[/]{total.Value:N0}");
-                        }
-                    }
-
-                    return result.RightJustified();
+                        return result.RightJustified();
                     case ProgressType.ValueTimeSpan:
-                    {
-                        result = new Markup(new TimeSpan((long)task.Value).ToString("hh\\:mm\\:ss"));
-                    }
-
-                    return result.RightJustified();
+                        {
+                            result = new Markup(new TimeSpan((long)task.Value).ToString("hh\\:mm\\:ss"));
+                        }
+                        return result.RightJustified();
                 }
             }
 
             return Text.Empty;
         }
 
+        /// <inheritdoc/>
         public override int? GetColumnWidth(RenderOptions options)
         {
             return 20;
