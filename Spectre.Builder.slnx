@@ -12,7 +12,6 @@
     <File Path="global.json" />
     <File Path="nuget.config" />
     <File Path="README.md" />
-    <File Path="stylecop.json" />
     <File Path="version.json" />
   </Folder>
   <Folder Name="/Solution Items/src/">

@@ -2,10 +2,16 @@
 
   <PropertyGroup>
     <TargetFrameworks>net8.0</TargetFrameworks>
+    <!--
     <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);net472</TargetFrameworks>
+    -->
     <OutputType>Exe</OutputType>
     <RootNamespace />
   </PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Remove="D:\repos\devsko\Spectre.Builder\stylecop.json" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Spectre.Builder\Spectre.Builder.csproj" />
