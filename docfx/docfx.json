@@ -3,7 +3,7 @@
 		{
 			"src": [
 				{
-					"src": "../src/Library",
+					"src": "../src/Spectre.Builder",
 					"files": [
 						"**/*.csproj"
 					]
@@ -39,8 +39,8 @@
 			"modern"
 		],
 		"globalMetadata": {
-			"_appName": "Library",
-			"_appTitle": "Library",
+			"_appName": "Spectre.Builder",
+			"_appTitle": "Spectre.Builder",
 			"_enableSearch": true,
 			"pdf": false
 		}
