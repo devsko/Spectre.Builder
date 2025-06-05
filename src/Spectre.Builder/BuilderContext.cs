@@ -104,6 +104,32 @@ public partial class BuilderContext
     }
 
     /// <summary>
+    /// Adds a resource to the context with the specified key.
+    /// </summary>
+    /// <param name="key">The key for the resource.</param>
+    /// <param name="resource">The resource to add.</param>
+    /// <returns>The added resource.</returns>
+    public IResource AddResource(string key, IResource resource)
+    {
+        Resources.Add(key, resource);
+        return resource;
+    }
+
+    /// <summary>
+    /// Gets a file resource by key.
+    /// </summary>
+    /// <param name="key">The key of the file resource.</param>
+    /// <returns>The <see cref="FileResource"/> associated with the key.</returns>
+    public FileResource GetFileResource(string key) => (FileResource)Resources[key];
+
+    /// <summary>
+    /// Gets a directory resource by key.
+    /// </summary>
+    /// <param name="key">The key of the directory resource.</param>
+    /// <returns>The <see cref="DirectoryResource"/> associated with the key.</returns>
+    public DirectoryResource GetDirectoryResource(string key) => (DirectoryResource)Resources[key];
+
+    /// <summary>
     /// Sets the total value for the specified progress step.
     /// </summary>
     /// <param name="step">The progress step.</param>
