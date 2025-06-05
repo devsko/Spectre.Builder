@@ -19,10 +19,9 @@ public sealed class PreliminaryFileStream(string path, int bufferSize, DateTime 
     /// <summary>
     /// Persists the preliminary file to the target path and setting the last write time.
     /// </summary>
-    /// <returns>A task that represents the asynchronous persist operation.</returns>
-    public async Task PersistAsync()
+    public void Persist()
     {
-        await FlushAsync();
+        Flush();
         File.SetLastWriteTimeUtc(SafeFileHandle, updateTime);
         SafeFileHandle.Dispose();
         if (File.Exists(path))
@@ -30,7 +29,6 @@ public sealed class PreliminaryFileStream(string path, int bufferSize, DateTime 
             File.Delete(path);
         }
         File.Move(Name, path);
-        await DisposeAsync();
     }
 
     /// <inheritdoc/>
