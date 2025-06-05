@@ -49,8 +49,8 @@ public abstract class ConversionStep : Step, IStep
     /// <inheritdoc/>
     async Task IStep.PrepareAsync(BuilderContext context)
     {
-        _inputs = await GetInputsAsync().ToArrayAsync();
-        _outputs = await GetOutputsAsync().ToArrayAsync();
+        _inputs = await GetInputsAsync(context).ToArrayAsync();
+        _outputs = await GetOutputsAsync(context).ToArrayAsync();
 
         context.AddStep(this);
 
@@ -117,13 +117,13 @@ public abstract class ConversionStep : Step, IStep
     /// Gets the input resources for this step.
     /// </summary>
     /// <returns>An enumerable of input resources.</returns>
-    protected virtual IAsyncEnumerable<IResource> GetInputsAsync() => AsyncEnumerable.Empty<IResource>();
+    protected virtual IAsyncEnumerable<IResource> GetInputsAsync(BuilderContext context) => AsyncEnumerable.Empty<IResource>();
 
     /// <summary>
     /// Gets the output resources for this step.
     /// </summary>
     /// <returns>An enumerable of output resources.</returns>
-    protected virtual IAsyncEnumerable<IResource> GetOutputsAsync() => AsyncEnumerable.Empty<IResource>();
+    protected virtual IAsyncEnumerable<IResource> GetOutputsAsync(BuilderContext context) => AsyncEnumerable.Empty<IResource>();
 
     /// <summary>
     /// Gets the progress information items for this step.
