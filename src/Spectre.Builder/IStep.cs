@@ -12,7 +12,7 @@ public interface IStep : IHasProgress
     /// Prepares the step for execution using the specified context.
     /// </summary>
     /// <param name="context">The context for the step execution.</param>
-    void Prepare(BuilderContext context);
+    Task PrepareAsync(BuilderContext context);
 
     /// <summary>
     /// Executes the step asynchronously using the specified context.

@@ -8,6 +8,14 @@
   
   <ItemGroup>
     <PackageReference Include="Spectre.Console" />
+    <PackageReference Include="System.Linq.Async" />
   </ItemGroup>
+
+  <Target Name="PublishLocal" AfterTargets="Pack" Condition="'$(NUGET_LOCALFEED)' != '' and '$(ContinuousIntegrationBuild)' != 'true'">
+    <ItemGroup>
+      <NuGetPackages Include="@(NuGetPackOutput)" Condition="'%(Extension)' == '.nupkg'" />
+    </ItemGroup>
+    <Exec Command="dotnet nuget push %(NuGetPackages.Identity) --source $(NUGET_LOCALFEED)" />
+  </Target>
 
 </Project>

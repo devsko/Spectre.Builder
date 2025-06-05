@@ -24,14 +24,14 @@ public abstract class CompoundStep(IEnumerable<IStep> steps, IEnumerable<Progres
     public virtual ProgressType Type => ProgressType.NumericStep;
 
     /// <inheritdoc/>
-    void IStep.Prepare(BuilderContext context)
+    async Task IStep.PrepareAsync(BuilderContext context)
     {
         context.AddStep(this);
 
         context.Level++;
         foreach (IStep step in Steps)
         {
-            step.Prepare(context);
+            await step.PrepareAsync(context);
         }
 
         foreach (ProgressInfo progress in Progresses)

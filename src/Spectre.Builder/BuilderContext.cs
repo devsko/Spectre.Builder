@@ -23,7 +23,7 @@ public partial class BuilderContext
         ArgumentNullException.ThrowIfNull(status);
 
         BuilderContext context = new();
-        step.Prepare(context);
+        await step.PrepareAsync(context);
 
         context.AddProgress(new EmptyInfo { Parent = step });
         foreach (StatusInfo statusInfo in status)
@@ -72,13 +72,18 @@ public partial class BuilderContext
     private readonly Dictionary<IHasProgress, ProgressTask> _consoleTasks = [];
     private readonly List<(IStep, string)> _errors = [];
 
-    private BuilderContext()
-    { }
+    /// <summary>
+    /// Gets the collection of global resources associated with this context.
+    /// </summary>
+    public Dictionary<string, IResource> Resources { get; } = [];
 
     /// <summary>
     /// Gets or sets the current step level.
     /// </summary>
     public int Level { get; set; }
+
+    private BuilderContext()
+    { }
 
     /// <summary>
     /// Adds a step to the context for progress tracking.
