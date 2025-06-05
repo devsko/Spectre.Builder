@@ -47,7 +47,7 @@ public abstract class ConversionStep : Step, IStep
     }
 
     /// <inheritdoc/>
-    void IStep.Prepare(StepContext context)
+    void IStep.Prepare(BuilderContext context)
     {
         _inputs = [.. GetInputs()];
         _outputs = [.. GetOutputs()];
@@ -64,7 +64,7 @@ public abstract class ConversionStep : Step, IStep
     }
 
     /// <inheritdoc/>
-    async Task IStep.ExecuteAsync(StepContext context)
+    async Task IStep.ExecuteAsync(BuilderContext context)
     {
         Debug.Assert(_inputs is not null);
         Debug.Assert(_outputs is not null);
@@ -137,5 +137,5 @@ public abstract class ConversionStep : Step, IStep
     /// <param name="context">The step context.</param>
     /// <param name="timestamp">The timestamp when execution started.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    protected abstract Task ExecuteAsync(StepContext context, DateTime timestamp);
+    protected abstract Task ExecuteAsync(BuilderContext context, DateTime timestamp);
 }

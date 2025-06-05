@@ -6,13 +6,13 @@ using Spectre.Console.Rendering;
 
 namespace Spectre.Builder;
 
-public partial class StepContext
+public partial class BuilderContext
 {
     /// <summary>
     /// Represents a base class for custom progress columns associated with a step context.
     /// </summary>
     /// <param name="context">The step context.</param>
-    private abstract class StepProgressColumn(StepContext context) : ProgressColumn
+    private abstract class StepProgressColumn(BuilderContext context) : ProgressColumn
     {
         /// <summary>
         /// Gets the step and its level from the progress task.
@@ -47,7 +47,7 @@ public partial class StepContext
     /// Represents a column that displays the name of the step.
     /// </summary>
     /// <param name="context">The step context.</param>
-    private sealed class NameColumn(StepContext context) : StepProgressColumn(context)
+    private sealed class NameColumn(BuilderContext context) : StepProgressColumn(context)
     {
         /// <inheritdoc/>
         protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress step, int level, TimeSpan deltaTime)
@@ -60,7 +60,7 @@ public partial class StepContext
     /// Represents a column that displays numerical progress information.
     /// </summary>
     /// <param name="context">The step context.</param>
-    private sealed class NumericalProgress(StepContext context) : StepProgressColumn(context)
+    private sealed class NumericalProgress(BuilderContext context) : StepProgressColumn(context)
     {
         private static readonly Markup _empty = new("");
 
@@ -90,7 +90,7 @@ public partial class StepContext
     /// Represents a column that displays elapsed time for a step.
     /// </summary>
     /// <param name="context">The step context.</param>
-    private sealed class ElapsedColumn(StepContext context) : StepProgressColumn(context)
+    private sealed class ElapsedColumn(BuilderContext context) : StepProgressColumn(context)
     {
         /// <inheritdoc/>
         protected override bool NoWrap => true;
@@ -116,7 +116,7 @@ public partial class StepContext
     /// Represents a column that displays value information for a step.
     /// </summary>
     /// <param name="context">The step context.</param>
-    private sealed class ValueColumn(StepContext context) : StepProgressColumn(context)
+    private sealed class ValueColumn(BuilderContext context) : StepProgressColumn(context)
     {
         /// <inheritdoc/>
         protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress step, int level, TimeSpan deltaTime)

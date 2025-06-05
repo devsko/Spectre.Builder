@@ -8,7 +8,7 @@ namespace Spectre.Builder;
 /// <summary>
 /// Provides context and progress management for executing steps with status reporting.
 /// </summary>
-public partial class StepContext
+public partial class BuilderContext
 {
     /// <summary>
     /// Runs the specified step asynchronously with the given status information.
@@ -22,7 +22,7 @@ public partial class StepContext
         ArgumentNullException.ThrowIfNull(step);
         ArgumentNullException.ThrowIfNull(status);
 
-        StepContext context = new();
+        BuilderContext context = new();
         step.Prepare(context);
 
         context.AddProgress(new EmptyInfo { Parent = step });
@@ -72,7 +72,7 @@ public partial class StepContext
     private readonly Dictionary<IHasProgress, ProgressTask> _consoleTasks = [];
     private readonly List<(IStep, string)> _errors = [];
 
-    private StepContext()
+    private BuilderContext()
     { }
 
     /// <summary>

@@ -13,7 +13,7 @@ public abstract class ParallelStep(IEnumerable<IStep> steps, IEnumerable<Progres
     /// </summary>
     /// <param name="context">The step execution context.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    protected override Task ExecuteStepsAsync(StepContext context)
+    protected override Task ExecuteStepsAsync(BuilderContext context)
     {
         return System.Threading.Tasks.Parallel.ForEachAsync(Steps, ParallelOptions, ExecuteAsync);
 

@@ -24,7 +24,7 @@ public abstract class CompoundStep(IEnumerable<IStep> steps, IEnumerable<Progres
     public virtual ProgressType Type => ProgressType.NumericStep;
 
     /// <inheritdoc/>
-    void IStep.Prepare(StepContext context)
+    void IStep.Prepare(BuilderContext context)
     {
         context.AddStep(this);
 
@@ -44,7 +44,7 @@ public abstract class CompoundStep(IEnumerable<IStep> steps, IEnumerable<Progres
     }
 
     /// <inheritdoc/>
-    async Task IStep.ExecuteAsync(StepContext context)
+    async Task IStep.ExecuteAsync(BuilderContext context)
     {
         State = ProgressState.Running;
         context.SetTotal(this, Steps.Count);
@@ -60,5 +60,5 @@ public abstract class CompoundStep(IEnumerable<IStep> steps, IEnumerable<Progres
     /// </summary>
     /// <param name="context">The step context.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    protected abstract Task ExecuteStepsAsync(StepContext context);
+    protected abstract Task ExecuteStepsAsync(BuilderContext context);
 }
