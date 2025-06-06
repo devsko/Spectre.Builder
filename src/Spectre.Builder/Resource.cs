@@ -1,25 +1,29 @@
 ﻿// Copyright (c) devsko. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Spectre.Builder;
 
 /// <summary>
-/// Represents a generic resource with a value and metadata such as last update time.
+/// Represents a generic resource with a value of type <see cref="T"/> and metadata such as last update time.
+/// <typeparamref name="T">The type of the value represented by this resource.</typeparamref>
 /// </summary>
-public class Resource(DateTimeOffset? lastUpdated) : IResource
+public class Resource<T>(string name, DateTimeOffset? lastUpdated) : IResource
 {
-    private object? _value;
+    private T? _value;
 
     /// <summary>
     /// Gets the value of the resource.
     /// </summary>
-    public object? Value => _value;
+    public T? Value => _value;
 
     /// <inheritdoc/>
-    public string Name => string.Empty;
+    public string Name => name;
 
     /// <inheritdoc/>
-    public bool IsAvailable => true;
+    [MemberNotNullWhen(true, nameof(Value))]
+    public bool IsAvailable => _value is not null;
 
     /// <inheritdoc/>
     public DateTimeOffset? LastUpdated => lastUpdated;
@@ -28,7 +32,7 @@ public class Resource(DateTimeOffset? lastUpdated) : IResource
     /// Sets the value of the resource.
     /// </summary>
     /// <param name="value">The value to set.</param>
-    public void Set(object? value)
+    public void Set(T? value)
     {
         _value = value;
     }

@@ -71,11 +71,7 @@ public partial class BuilderContext
     private readonly Dictionary<int, (IHasProgress, int)> _progresses = [];
     private readonly Dictionary<IHasProgress, ProgressTask> _consoleTasks = [];
     private readonly List<(IStep, string)> _errors = [];
-
-    /// <summary>
-    /// Gets the collection of global resources associated with this context.
-    /// </summary>
-    public Dictionary<string, IResource> Resources { get; } = [];
+    private readonly Dictionary<string, IResource> _resources = [];
 
     /// <summary>
     /// Gets or sets the current step level.
@@ -109,25 +105,44 @@ public partial class BuilderContext
     /// <param name="key">The key for the resource.</param>
     /// <param name="resource">The resource to add.</param>
     /// <returns>The added resource.</returns>
-    public IResource AddResource(string key, IResource resource)
+    public T AddResource<T>(T resource, string key) where T : IResource
     {
-        Resources.Add(key, resource);
+        _resources.Add(key, resource);
         return resource;
     }
+
+    /// <summary>
+    /// Adds a resource to the context and uses the name of the resource as key.
+    /// </summary>
+    /// <param name="resource">The resource to add.</param>
+    /// <returns>The added resource.</returns>
+    public T AddResource<T>(T resource) where T : IResource
+    {
+        _resources.Add(resource.Name, resource);
+        return resource;
+    }
+
+    /// <summary>
+    /// Gets a resource of type <see cref="Resource{T}"/> by its key.
+    /// </summary>
+    /// <typeparam name="T">The type of the resource value.</typeparam>
+    /// <param name="key">The key of the resource.</param>
+    /// <returns>The <see cref="Resource{T}"/> associated with the specified key.</returns>
+    public Resource<T> GetResource<T>(string key) => (Resource<T>)_resources[key];
 
     /// <summary>
     /// Gets a file resource by key.
     /// </summary>
     /// <param name="key">The key of the file resource.</param>
     /// <returns>The <see cref="FileResource"/> associated with the key.</returns>
-    public FileResource GetFileResource(string key) => (FileResource)Resources[key];
+    public FileResource GetFileResource(string key) => (FileResource)_resources[key];
 
     /// <summary>
     /// Gets a directory resource by key.
     /// </summary>
     /// <param name="key">The key of the directory resource.</param>
     /// <returns>The <see cref="DirectoryResource"/> associated with the key.</returns>
-    public DirectoryResource GetDirectoryResource(string key) => (DirectoryResource)Resources[key];
+    public DirectoryResource GetDirectoryResource(string key) => (DirectoryResource)_resources[key];
 
     /// <summary>
     /// Sets the total value for the specified progress step.

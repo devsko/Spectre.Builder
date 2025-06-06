@@ -1917,3 +1917,6 @@ dotnet_diagnostic.IDE2005.severity = silent
 dotnet_diagnostic.IDE2006.severity = silent
 
 ###################
+
+# CS1723: XML comment has cref attribute that refers to a type parameter
+dotnet_diagnostic.CS1723.severity = none
