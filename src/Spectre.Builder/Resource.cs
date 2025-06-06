@@ -9,7 +9,7 @@ namespace Spectre.Builder;
 /// Represents a generic resource with a value of type <see cref="T"/> and metadata such as last update time.
 /// <typeparamref name="T">The type of the value represented by this resource.</typeparamref>
 /// </summary>
-public class Resource<T>(string name, DateTimeOffset? lastUpdated) : IResource
+public class Resource<T>(DateTimeOffset? lastUpdated) : IResource
 {
     private T? _value;
 
@@ -19,7 +19,7 @@ public class Resource<T>(string name, DateTimeOffset? lastUpdated) : IResource
     public T? Value => _value;
 
     /// <inheritdoc/>
-    public string Name => name;
+    public string Name => typeof(T).Name;
 
     /// <inheritdoc/>
     [MemberNotNullWhen(true, nameof(Value))]

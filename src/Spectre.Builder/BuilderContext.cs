@@ -105,20 +105,9 @@ public partial class BuilderContext
     /// <param name="key">The key for the resource.</param>
     /// <param name="resource">The resource to add.</param>
     /// <returns>The added resource.</returns>
-    public T AddResource<T>(T resource, string key) where T : IResource
+    public T AddResource<T>(string key, T resource) where T : IResource
     {
         _resources.Add(key, resource);
-        return resource;
-    }
-
-    /// <summary>
-    /// Adds a resource to the context and uses the name of the resource as key.
-    /// </summary>
-    /// <param name="resource">The resource to add.</param>
-    /// <returns>The added resource.</returns>
-    public T AddResource<T>(T resource) where T : IResource
-    {
-        _resources.Add(resource.Name, resource);
         return resource;
     }
 
