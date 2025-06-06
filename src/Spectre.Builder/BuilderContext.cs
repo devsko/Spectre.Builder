@@ -115,14 +115,6 @@ public partial class BuilderContext
     }
 
     /// <summary>
-    /// Gets a resource of type <see cref="Resource{T}"/> by its key.
-    /// </summary>
-    /// <typeparam name="T">The type of the resource value.</typeparam>
-    /// <param name="key">The key of the resource.</param>
-    /// <returns>The <see cref="Resource{T}"/> associated with the specified key.</returns>
-    public Resource<T> GetResource<T>(string key) => (Resource<T>)_resources[key];
-
-    /// <summary>
     /// Gets a file resource by key.
     /// </summary>
     /// <param name="key">The key of the file resource.</param>
