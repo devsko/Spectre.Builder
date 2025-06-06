@@ -72,7 +72,7 @@ public sealed class ProgressStream(Stream baseStream, IProgress<int> progress) :
     /// <inheritdoc/>
     public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        await base.WriteAsync(buffer, cancellationToken);
+        await baseStream.WriteAsync(buffer, cancellationToken);
         progress.Report(buffer.Length);
     }
 
