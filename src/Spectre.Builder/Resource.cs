@@ -1,8 +1,6 @@
 ﻿// Copyright (c) devsko. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace Spectre.Builder;
 
 /// <summary>
@@ -45,7 +43,6 @@ public class Resource<T>(DateTimeOffset? lastUpdated) : IResource
     public string Name => typeof(T).Name;
 
     /// <inheritdoc/>
-    [MemberNotNullWhen(true, nameof(Value))]
     public bool IsAvailable => _value is not null;
 
     /// <inheritdoc/>

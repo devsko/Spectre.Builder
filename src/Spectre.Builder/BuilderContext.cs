@@ -17,12 +17,12 @@ public partial class BuilderContext
     /// <param name="status">An array of status information to track.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public static async Task RunAsync(IStep step, StatusInfo[] status, CancellationToken cancellationToken)
+    public static async Task RunAsync<TContext>(IStep step, StatusInfo[] status, CancellationToken cancellationToken) where TContext : BuilderContext, new()
     {
         ArgumentNullException.ThrowIfNull(step);
         ArgumentNullException.ThrowIfNull(status);
 
-        BuilderContext context = new();
+        BuilderContext context = new TContext();
         await step.PrepareAsync(context);
 
         context.AddProgress(new EmptyInfo { Parent = step });
@@ -78,7 +78,10 @@ public partial class BuilderContext
     /// </summary>
     public int Level { get; set; }
 
-    private BuilderContext()
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BuilderContext"/> class.
+    /// </summary>
+    protected BuilderContext()
     { }
 
     /// <summary>
