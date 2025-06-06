@@ -134,8 +134,8 @@ public abstract class ConversionStep : Step, IStep
     /// <summary>
     /// Executes the conversion step asynchronously.
     /// </summary>
-    /// <param name="context">The step context.</param>
+    /// <param name="builderContext">The step context.</param>
     /// <param name="timestamp">The timestamp when execution started.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    protected abstract Task ExecuteAsync(BuilderContext context, DateTime timestamp);
+    protected abstract Task ExecuteAsync(BuilderContext builderContext, DateTime timestamp);
 }
