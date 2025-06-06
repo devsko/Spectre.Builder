@@ -79,9 +79,17 @@ public partial class BuilderContext
     public int Level { get; set; }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BuilderContext"/> class.
+    /// Creates a new instance of the <see cref="BuilderContext"/> class.
     /// </summary>
     protected BuilderContext()
+    {
+        Initialize();
+    }
+
+    /// <summary>
+    /// Initializes a new created instance of the <see cref="BuilderContext"/> class.
+    /// </summary>
+    protected virtual void Initialize()
     { }
 
     /// <summary>
