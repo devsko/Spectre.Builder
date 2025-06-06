@@ -14,6 +14,29 @@ public class Resource<T>(DateTimeOffset? lastUpdated) : IResource
     private T? _value;
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="Resource{T}"/> class using the latest <see cref="IResource.LastUpdated"/>
+    /// value from the specified dependencies.
+    /// </summary>
+    /// <param name="dependsOn">A span of resources that this resource depends on. The most recent <see cref="IResource.LastUpdated"/> value among them is used.</param>
+    public Resource(params ReadOnlySpan<IResource> dependsOn)
+        : this(GetLastUpdated(dependsOn))
+    { }
+
+    private static DateTimeOffset? GetLastUpdated(ReadOnlySpan<IResource> dependsOn)
+    {
+        DateTimeOffset? lastUpdated = null;
+        foreach (IResource resource in dependsOn)
+        {
+            if (resource.LastUpdated is DateTimeOffset date && (lastUpdated is null || date > lastUpdated.Value))
+            {
+                lastUpdated = date;
+            }
+        }
+
+        return lastUpdated;
+    }
+
+    /// <summary>
     /// Gets the value of the resource.
     /// </summary>
     public T? Value => _value;
