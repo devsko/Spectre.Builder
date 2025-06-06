@@ -23,6 +23,8 @@ public partial class BuilderContext
         ArgumentNullException.ThrowIfNull(status);
 
         BuilderContext context = new TContext();
+        await context.InitializeAsync();
+
         await step.PrepareAsync(context);
 
         context.AddProgress(new EmptyInfo { Parent = step });
@@ -82,15 +84,12 @@ public partial class BuilderContext
     /// Creates a new instance of the <see cref="BuilderContext"/> class.
     /// </summary>
     protected BuilderContext()
-    {
-        Initialize();
-    }
+    { }
 
     /// <summary>
-    /// Initializes a new created instance of the <see cref="BuilderContext"/> class.
+    /// Asynchronously initializes a new created instance of the <see cref="BuilderContext"/> class.
     /// </summary>
-    protected virtual void Initialize()
-    { }
+    protected virtual Task InitializeAsync() => Task.CompletedTask;
 
     /// <summary>
     /// Adds a step to the context for progress tracking.
