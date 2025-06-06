@@ -4,7 +4,7 @@
 namespace Spectre.Builder;
 
 /// <summary>
-/// A stream wrapper that reports progress on read operations.
+/// A stream wrapper that reports progress on read and write operations.
 /// </summary>
 /// <remarks>
 /// Initializes a new instance of the <see cref="ProgressStream"/> class.
@@ -18,7 +18,7 @@ public sealed class ProgressStream(Stream baseStream, IProgress<int> progress) :
     /// Initializes a new instance of the <see cref="ProgressStream"/> class.
     /// </summary>
     /// <param name="baseStream">The underlying stream to wrap.</param>
-    /// <param name="progress">The action to invoke with the number of bytes read.</param>
+    /// <param name="progress">The action to invoke with the number of bytes read/written.</param>
     public ProgressStream(Stream baseStream, Action<int> progress)
         : this(baseStream, new Progress<int>(progress))
     { }
@@ -70,7 +70,18 @@ public sealed class ProgressStream(Stream baseStream, IProgress<int> progress) :
     }
 
     /// <inheritdoc/>
-    public override void Write(byte[] buffer, int offset, int count) => throw new NotImplementedException();
+    public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+    {
+        await base.WriteAsync(buffer, cancellationToken);
+        progress.Report(buffer.Length);
+    }
+
+    /// <inheritdoc/>
+    public override void Write(byte[] buffer, int offset, int count)
+    {
+        baseStream.Write(buffer, offset, count);
+        progress.Report(count);
+    }
 
     /// <inheritdoc/>
     public override ValueTask DisposeAsync() => baseStream.DisposeAsync();
