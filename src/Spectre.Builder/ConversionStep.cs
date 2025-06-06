@@ -16,7 +16,7 @@ public abstract class ConversionStep : Step, IStep
     /// <summary>
     /// Gets the type of progress information to display for this step.
     /// </summary>
-    public virtual ProgressType Type => (ShowProgressValue ? ShowFileSizeProgress ? ProgressType.ValueDataSize : ProgressType.ValueRaw : 0) | ProgressType.NumericPercentage | ProgressType.ElapsedVisible;
+    public virtual ProgressType Type => (ShowProgressValue ? ShowProgressAsDataSize ? ProgressType.ValueDataSize : ProgressType.ValueRaw : 0) | ProgressType.NumericPercentage | ProgressType.ElapsedVisible;
 
     /// <summary>
     /// Gets a value indicating whether to show the progress value.
@@ -26,7 +26,7 @@ public abstract class ConversionStep : Step, IStep
     /// <summary>
     /// Gets a value indicating whether to show file size progress.
     /// </summary>
-    protected virtual bool ShowFileSizeProgress => true;
+    protected virtual bool ShowProgressAsDataSize => true;
 
     /// <summary>
     /// Gets a value indicating whether to hide the step when skipped.
