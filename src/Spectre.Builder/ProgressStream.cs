@@ -20,7 +20,7 @@ public sealed class ProgressStream(Stream baseStream, IProgress<int> progress) :
     /// <param name="baseStream">The underlying stream to wrap.</param>
     /// <param name="progress">The action to invoke with the number of bytes read/written.</param>
     public ProgressStream(Stream baseStream, Action<int> progress)
-        : this(baseStream, new Progress<int>(progress))
+        : this(baseStream, new ProgressSlim<int>(progress))
     { }
 
     /// <inheritdoc/>

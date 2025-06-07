@@ -9,7 +9,7 @@ namespace Spectre.Builder;
 /// <typeparam name="T">
 /// The type of progress update value.
 /// </typeparam>
-public class Progress<T>(Action<T> handler) : IProgress<T>
+public class ProgressSlim<T>(Action<T> handler) : IProgress<T>
 {
     /// <inheritdoc/>
     public void Report(T value)
