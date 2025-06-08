@@ -11,19 +11,29 @@ namespace Spectre.Builder;
 public partial class BuilderContext
 {
     /// <summary>
-    /// Runs the specified step asynchronously with the given status information.
+    /// Runs the specified step asynchronously with the provided status information and cancellation token.
     /// </summary>
     /// <param name="step">The step to execute.</param>
-    /// <param name="status">An array of status information to track.</param>
+    /// <param name="status">An array of status information to track during execution.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public static async Task RunAsync<TContext>(IStep step, StatusInfo[] status, CancellationToken cancellationToken) where TContext : BuilderContext, new()
+    public static Task RunAsync(IStep step, StatusInfo[] status, CancellationToken cancellationToken)
+    {
+        return RunAsync(new BuilderContext(), step, status, cancellationToken);
+    }
+
+    /// <summary>
+    /// Runs the specified step asynchronously within the given context, using the provided status information and cancellation token.
+    /// </summary>
+    /// <param name="context">The builder context to use for execution.</param>
+    /// <param name="step">The step to execute.</param>
+    /// <param name="status">An array of status information to track during execution.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public static async Task RunAsync(BuilderContext context, IStep step, StatusInfo[] status, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(step);
         ArgumentNullException.ThrowIfNull(status);
-
-        BuilderContext context = new TContext();
-        await context.InitializeAsync();
 
         await step.PrepareAsync(context);
 
@@ -79,17 +89,6 @@ public partial class BuilderContext
     /// Gets or sets the current step level.
     /// </summary>
     public int Level { get; set; }
-
-    /// <summary>
-    /// Creates a new instance of the <see cref="BuilderContext"/> class.
-    /// </summary>
-    protected BuilderContext()
-    { }
-
-    /// <summary>
-    /// Asynchronously initializes a new created instance of the <see cref="BuilderContext"/> class.
-    /// </summary>
-    protected virtual Task InitializeAsync() => Task.CompletedTask;
 
     /// <summary>
     /// Adds a step to the context for progress tracking.
