@@ -95,14 +95,14 @@ public readonly struct DataSize
 
     private static DataSizeUnit GetUnit(int bytes)
     {
-        int divisor = 1_000;
+        int divisor = 1_024;
         for (DataSizeUnit unit = 0; unit <= DataSizeUnit.Giga; unit++)
         {
             if (bytes < divisor)
             {
                 return unit;
             }
-            divisor *= 1_000;
+            divisor *= 1_024;
         }
 
         return DataSizeUnit.Giga;
