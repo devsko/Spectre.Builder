@@ -48,7 +48,7 @@ public abstract class Step : IStep
 
     ProgressType IHasProgress.Type => throw new NotImplementedException();
 
-    Task IStep.PrepareAsync(BuilderContext context) => throw new NotImplementedException();
+    void IStep.Prepare(BuilderContext context) => throw new NotImplementedException();
 
     Task IStep.ExecuteAsync(BuilderContext context) => throw new NotImplementedException();
 }

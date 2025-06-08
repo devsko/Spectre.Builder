@@ -116,7 +116,7 @@ public partial class BuilderContext
         ArgumentNullException.ThrowIfNull(step);
         ArgumentNullException.ThrowIfNull(status);
 
-        await step.PrepareAsync(this);
+        step.Prepare(this);
 
         AddProgress(new EmptyInfo { Parent = step });
         foreach (StatusInfo statusInfo in status)
