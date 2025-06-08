@@ -10,76 +10,6 @@ namespace Spectre.Builder;
 /// </summary>
 public partial class BuilderContext
 {
-    /// <summary>
-    /// Runs the specified step asynchronously with the provided status information and cancellation token.
-    /// </summary>
-    /// <param name="step">The step to execute.</param>
-    /// <param name="status">An array of status information to track during execution.</param>
-    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    public static Task RunAsync(IStep step, StatusInfo[] status, CancellationToken cancellationToken)
-    {
-        return RunAsync(new BuilderContext(), step, status, cancellationToken);
-    }
-
-    /// <summary>
-    /// Runs the specified step asynchronously within the given context, using the provided status information and cancellation token.
-    /// </summary>
-    /// <param name="context">The builder context to use for execution.</param>
-    /// <param name="step">The step to execute.</param>
-    /// <param name="status">An array of status information to track during execution.</param>
-    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    public static async Task RunAsync(BuilderContext context, IStep step, StatusInfo[] status, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(step);
-        ArgumentNullException.ThrowIfNull(status);
-
-        await step.PrepareAsync(context);
-
-        context.AddProgress(new EmptyInfo { Parent = step });
-        foreach (StatusInfo statusInfo in status)
-        {
-            statusInfo.Parent = step;
-            context.AddProgress(statusInfo);
-        }
-
-        await AnsiConsole
-            .Progress()
-            .Columns([
-                new NameColumn(context),
-                new ValueColumn(context),
-                new NumericalProgress(context),
-                new ElapsedColumn(context)])
-            .StartAsync(async ctx =>
-            {
-                foreach ((IHasProgress progress, int level) in context._progresses.Values)
-                {
-                    if (progress.ShouldShowProgress)
-                    {
-                        context._consoleTasks.Add(progress, ctx.AddTask(progress.GetHashCode().ToString(), autoStart: false, maxValue: double.PositiveInfinity));
-                    }
-                }
-
-                Task setStatus = Task.Run(async () =>
-                {
-                    while (step.State is ProgressState.Running or ProgressState.Wait)
-                    {
-                        foreach (StatusInfo status in status)
-                        {
-                            context.SetProgress(status, status.GetValue());
-                        }
-                        await Task.Delay(TimeSpan.FromSeconds(1));
-                    }
-                });
-
-                await context.ExecuteAsync(step, cancellationToken);
-                await setStatus;
-
-                ctx.Refresh();
-            });
-    }
-
     private readonly Dictionary<int, (IHasProgress, int)> _progresses = [];
     private readonly Dictionary<IHasProgress, ProgressTask> _consoleTasks = [];
     private readonly List<(IStep, string)> _errors = [];
@@ -171,6 +101,64 @@ public partial class BuilderContext
         {
             task.Increment(amount);
         }
+    }
+
+    /// <summary>
+    /// Runs the specified step asynchronously with the provided status information and cancellation token.
+    /// Prepares the step, adds progress tracking for the step and its statuses, and displays progress using Spectre.Console.
+    /// </summary>
+    /// <param name="step">The step to execute.</param>
+    /// <param name="status">An array of status information to track during execution.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public async Task RunAsync(IStep step, StatusInfo[] status, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(step);
+        ArgumentNullException.ThrowIfNull(status);
+
+        await step.PrepareAsync(this);
+
+        AddProgress(new EmptyInfo { Parent = step });
+        foreach (StatusInfo statusInfo in status)
+        {
+            statusInfo.Parent = step;
+            AddProgress(statusInfo);
+        }
+
+        await AnsiConsole
+            .Progress()
+            .Columns([
+                new NameColumn(this),
+                new ValueColumn(this),
+                new NumericalProgress(this),
+                new ElapsedColumn(this)])
+            .StartAsync(async ctx =>
+            {
+                foreach ((IHasProgress progress, int level) in _progresses.Values)
+                {
+                    if (progress.ShouldShowProgress)
+                    {
+                        _consoleTasks.Add(progress, ctx.AddTask(progress.GetHashCode().ToString(), autoStart: false, maxValue: double.PositiveInfinity));
+                    }
+                }
+
+                Task setStatus = Task.Run(async () =>
+                {
+                    while (step.State is ProgressState.Running or ProgressState.Wait)
+                    {
+                        foreach (StatusInfo status in status)
+                        {
+                            SetProgress(status, status.GetValue());
+                        }
+                        await Task.Delay(TimeSpan.FromSeconds(1));
+                    }
+                });
+
+                await ExecuteAsync(step, cancellationToken);
+                await setStatus;
+
+                ctx.Refresh();
+            });
     }
 
     /// <summary>
