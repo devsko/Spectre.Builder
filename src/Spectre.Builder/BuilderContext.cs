@@ -1,20 +1,85 @@
 ﻿// Copyright (c) devsko. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Runtime.CompilerServices;
 using Spectre.Console;
 
 namespace Spectre.Builder;
 
 /// <summary>
+/// 
+/// </summary>
+/// <typeparam name="TContext"></typeparam>
+public interface IBuilderContext<TContext> where TContext : class, IBuilderContext<TContext>
+{
+    /// <summary>
+    /// 
+    /// </summary>
+    Dictionary<int, (IHasProgress, int)> Progresses { get; }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="step"></param>
+    void AddStep(IStep<TContext> step);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="progress"></param>
+    void AddProgress(ProgressInfo progress);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    int Level { get; set; }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="progress"></param>
+    /// <param name="total"></param>
+    void SetTotal(IHasProgress progress, long total);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="progress"></param>
+    /// <param name="amount"></param>
+    void IncrementProgress(IHasProgress progress, long amount = 1);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="step"></param>
+    /// <returns></returns>
+    ValueTask ExecuteAsync(IStep<TContext> step);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="step"></param>
+    /// <param name="error"></param>
+    void Fail(IStep<TContext> step, string error);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    void EnsureValid();
+}
+
+/// <summary>
 /// Provides context and progress management for executing steps with status reporting.
 /// </summary>
-public partial class BuilderContext(CancellationToken cancellationToken)
+public partial class BuilderContext<TContext>(CancellationToken cancellationToken) : IBuilderContext<TContext> where TContext : class, IBuilderContext<TContext>
 {
     private readonly Dictionary<int, (IHasProgress, int)> _progresses = [];
     private readonly Dictionary<IHasProgress, ProgressTask> _consoleTasks = [];
-    private readonly List<(IStep, string)> _errors = [];
+    private readonly List<(IStep<TContext>, string)> _errors = [];
     private readonly Dictionary<string, IResource> _resources = [];
     private readonly CancellationToken _cancellationToken = cancellationToken;
+
+    Dictionary<int, (IHasProgress, int)> IBuilderContext<TContext>.Progresses => _progresses;
 
     /// <summary>
     /// Gets or sets the current step level.
@@ -25,7 +90,7 @@ public partial class BuilderContext(CancellationToken cancellationToken)
     /// Adds a step to the context for progress tracking.
     /// </summary>
     /// <param name="step">The step to add.</param>
-    public void AddStep(IStep step)
+    public void AddStep(IStep<TContext> step)
     {
         _progresses.Add(step.GetHashCode(), (step, Level));
     }
@@ -68,11 +133,11 @@ public partial class BuilderContext(CancellationToken cancellationToken)
     /// <summary>
     /// Sets the total value for the specified progress step.
     /// </summary>
-    /// <param name="step">The progress step.</param>
+    /// <param name="progress">The progress step.</param>
     /// <param name="total">The total value to set.</param>
-    public void SetTotal(IHasProgress step, long total)
+    public void SetTotal(IHasProgress progress, long total)
     {
-        if (_consoleTasks.TryGetValue(step, out ProgressTask? task))
+        if (_consoleTasks.TryGetValue(progress, out ProgressTask? task))
         {
             task.MaxValue = total;
         }
@@ -94,11 +159,11 @@ public partial class BuilderContext(CancellationToken cancellationToken)
     /// <summary>
     /// Increments the progress value for the specified step by the given amount.
     /// </summary>
-    /// <param name="step">The progress step.</param>
+    /// <param name="progress">The progress step.</param>
     /// <param name="amount">The amount to increment by. Defaults to 1.</param>
-    public void IncrementProgress(IHasProgress step, long amount = 1)
+    public void IncrementProgress(IHasProgress progress, long amount = 1)
     {
-        if (_consoleTasks.TryGetValue(step, out ProgressTask? task))
+        if (_consoleTasks.TryGetValue(progress, out ProgressTask? task))
         {
             task.Increment(amount);
         }
@@ -111,12 +176,14 @@ public partial class BuilderContext(CancellationToken cancellationToken)
     /// <param name="step">The step to execute.</param>
     /// <param name="status">An array of status information to track during execution.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task RunAsync(IStep step, StatusInfo[] status)
+    public async Task RunAsync(IStep<TContext> step, StatusInfo[] status)
     {
         ArgumentNullException.ThrowIfNull(step);
         ArgumentNullException.ThrowIfNull(status);
 
-        step.Prepare(this);
+        TContext context = Unsafe.As<TContext>(this);
+
+        step.Prepare(context);
 
         AddProgress(new EmptyInfo { Parent = step });
         foreach (StatusInfo statusInfo in status)
@@ -128,10 +195,10 @@ public partial class BuilderContext(CancellationToken cancellationToken)
         await AnsiConsole
             .Progress()
             .Columns([
-                new NameColumn(this),
-                new ValueColumn(this),
-                new NumericalProgress(this),
-                new ElapsedColumn(this)])
+                new NameColumn(context),
+                new ValueColumn(context),
+                new NumericalProgress(context),
+                new ElapsedColumn(context)])
             .StartAsync(async ctx =>
             {
                 foreach ((IHasProgress progress, int level) in _progresses.Values)
@@ -166,7 +233,7 @@ public partial class BuilderContext(CancellationToken cancellationToken)
     /// </summary>
     /// <param name="step">The step to execute.</param>
     /// <returns>A value task representing the asynchronous operation.</returns>
-    public async ValueTask ExecuteAsync(IStep step)
+    public async ValueTask ExecuteAsync(IStep<TContext> step)
     {
         ArgumentNullException.ThrowIfNull(step);
 
@@ -175,7 +242,7 @@ public partial class BuilderContext(CancellationToken cancellationToken)
             task.StartTask();
         }
 
-        await step.ExecuteAsync(this, _cancellationToken);
+        await step.ExecuteAsync(Unsafe.As<TContext>(this), _cancellationToken);
 
         if (_consoleTasks.TryGetValue(step, out task))
         {
@@ -189,10 +256,10 @@ public partial class BuilderContext(CancellationToken cancellationToken)
     /// Marks the specified step as failed with the given error message.
     /// </summary>
     /// <param name="step">The step that failed.</param>
-    /// <param name="message">The error message.</param>
-    public void Fail(IStep step, string message)
+    /// <param name="error">The error message.</param>
+    public void Fail(IStep<TContext> step, string error)
     {
-        _errors.Add((step, message));
+        _errors.Add((step, error));
     }
 
     /// <summary>

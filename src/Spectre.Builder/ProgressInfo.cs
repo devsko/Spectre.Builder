@@ -11,7 +11,7 @@ public class ProgressInfo(string name) : IHasProgress
     /// <summary>
     /// Gets or sets the parent step associated with this progress information.
     /// </summary>
-    public IStep? Parent { get; set; }
+    public IHasProgress? Parent { get; set; }
 
     /// <summary>
     /// Gets the name of the progress information.

@@ -8,7 +8,7 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents an abstract step that performs a conversion operation with progress tracking.
 /// </summary>
-public abstract class ConversionStep : Step, IStep
+public abstract class ConversionStep<TContext> : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
 {
     private IResource[]? _inputs;
     private IResource[]? _outputs;
@@ -47,7 +47,7 @@ public abstract class ConversionStep : Step, IStep
     }
 
     /// <inheritdoc/>
-    void IStep.Prepare(BuilderContext context)
+    void IStep<TContext>.Prepare(TContext context)
     {
         _inputs = [.. GetInputs(context)];
         _outputs = [.. GetOutputs(context)];
@@ -64,7 +64,7 @@ public abstract class ConversionStep : Step, IStep
     }
 
     /// <inheritdoc/>
-    async Task IStep.ExecuteAsync(BuilderContext context, CancellationToken cancellationToken)
+    async Task IStep<TContext>.ExecuteAsync(TContext context, CancellationToken cancellationToken)
     {
         Debug.Assert(_inputs is not null);
         Debug.Assert(_outputs is not null);
@@ -117,13 +117,13 @@ public abstract class ConversionStep : Step, IStep
     /// Gets the input resources for this step.
     /// </summary>
     /// <returns>An enumerable of input resources.</returns>
-    protected virtual IEnumerable<IResource> GetInputs(BuilderContext context) => [];
+    protected virtual IEnumerable<IResource> GetInputs(TContext context) => [];
 
     /// <summary>
     /// Gets the output resources for this step.
     /// </summary>
     /// <returns>An enumerable of output resources.</returns>
-    protected virtual IEnumerable<IResource> GetOutputs(BuilderContext context) => [];
+    protected virtual IEnumerable<IResource> GetOutputs(TContext context) => [];
 
     /// <summary>
     /// Gets the progress information items for this step.
@@ -138,5 +138,5 @@ public abstract class ConversionStep : Step, IStep
     /// <param name="timestamp">The timestamp when execution started.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    protected abstract Task ExecuteAsync(BuilderContext builderContext, DateTime timestamp, CancellationToken cancellationToken);
+    protected abstract Task ExecuteAsync(TContext builderContext, DateTime timestamp, CancellationToken cancellationToken);
 }

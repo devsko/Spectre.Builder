@@ -6,12 +6,12 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents a step that contains multiple sub-steps and progress information.
 /// </summary>
-public abstract class CompoundStep(IEnumerable<IStep> steps, IEnumerable<ProgressInfo>? progresses) : Step, IStep
+public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps, IEnumerable<ProgressInfo>? progresses) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <summary>
     /// Gets the list of sub-steps contained in this compound step.
     /// </summary>
-    protected List<IStep> Steps { get; } = [.. steps];
+    protected List<IStep<TContext>> Steps { get; } = [.. steps];
 
     /// <summary>
     /// Gets the list of progress information items associated with this compound step.
@@ -24,12 +24,12 @@ public abstract class CompoundStep(IEnumerable<IStep> steps, IEnumerable<Progres
     public virtual ProgressType Type => ProgressType.NumericStep;
 
     /// <inheritdoc/>
-    void IStep.Prepare(BuilderContext context)
+    void IStep<TContext>.Prepare(TContext context)
     {
         context.AddStep(this);
 
         context.Level++;
-        foreach (IStep step in Steps)
+        foreach (IStep<TContext> step in Steps)
         {
             step.Prepare(context);
         }
@@ -44,7 +44,7 @@ public abstract class CompoundStep(IEnumerable<IStep> steps, IEnumerable<Progres
     }
 
     /// <inheritdoc/>
-    async Task IStep.ExecuteAsync(BuilderContext context, CancellationToken cancellationToken)
+    async Task IStep<TContext>.ExecuteAsync(TContext context, CancellationToken cancellationToken)
     {
         State = ProgressState.Running;
         context.SetTotal(this, Steps.Count);
@@ -61,5 +61,5 @@ public abstract class CompoundStep(IEnumerable<IStep> steps, IEnumerable<Progres
     /// <param name="context">The step context.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    protected abstract Task ExecuteStepsAsync(BuilderContext context, CancellationToken cancellationToken);
+    protected abstract Task ExecuteStepsAsync(TContext context, CancellationToken cancellationToken);
 }

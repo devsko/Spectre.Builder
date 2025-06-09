@@ -6,13 +6,13 @@ using Spectre.Console.Rendering;
 
 namespace Spectre.Builder;
 
-public partial class BuilderContext
+public partial class BuilderContext<TContext>
 {
     /// <summary>
     /// Represents a base class for custom progress columns associated with a step context.
     /// </summary>
     /// <param name="context">The step context.</param>
-    private abstract class StepProgressColumn(BuilderContext context) : ProgressColumn
+    private abstract class StepProgressColumn(TContext context) : ProgressColumn
     {
         /// <summary>
         /// Gets the step and its level from the progress task.
@@ -21,7 +21,7 @@ public partial class BuilderContext
         /// <returns>A tuple containing the step and its level.</returns>
         protected (IHasProgress Step, int Level) GetStepAndLevel(ProgressTask task)
         {
-            return context._progresses[int.Parse(task.Description)];
+            return context.Progresses[int.Parse(task.Description)];
         }
 
         /// <inheritdoc/>
@@ -47,7 +47,7 @@ public partial class BuilderContext
     /// Represents a column that displays the name of the step.
     /// </summary>
     /// <param name="context">The step context.</param>
-    private sealed class NameColumn(BuilderContext context) : StepProgressColumn(context)
+    private sealed class NameColumn(TContext context) : StepProgressColumn(context)
     {
         /// <inheritdoc/>
         protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress step, int level, TimeSpan deltaTime)
@@ -60,7 +60,7 @@ public partial class BuilderContext
     /// Represents a column that displays numerical progress information.
     /// </summary>
     /// <param name="context">The step context.</param>
-    private sealed class NumericalProgress(BuilderContext context) : StepProgressColumn(context)
+    private sealed class NumericalProgress(TContext context) : StepProgressColumn(context)
     {
         private static readonly Markup _empty = new("");
 
@@ -90,7 +90,7 @@ public partial class BuilderContext
     /// Represents a column that displays elapsed time for a step.
     /// </summary>
     /// <param name="context">The step context.</param>
-    private sealed class ElapsedColumn(BuilderContext context) : StepProgressColumn(context)
+    private sealed class ElapsedColumn(TContext context) : StepProgressColumn(context)
     {
         /// <inheritdoc/>
         protected override bool NoWrap => true;
@@ -116,7 +116,7 @@ public partial class BuilderContext
     /// Represents a column that displays value information for a step.
     /// </summary>
     /// <param name="context">The step context.</param>
-    private sealed class ValueColumn(BuilderContext context) : StepProgressColumn(context)
+    private sealed class ValueColumn(TContext context) : StepProgressColumn(context)
     {
         /// <inheritdoc/>
         protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress step, int level, TimeSpan deltaTime)

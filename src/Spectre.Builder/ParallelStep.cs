@@ -6,7 +6,7 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents a compound step that executes its child steps in parallel.
 /// </summary>
-public abstract class ParallelStep(IEnumerable<IStep> steps, IEnumerable<ProgressInfo>? progresses = null) : CompoundStep(steps, progresses), IStep
+public abstract class ParallelStep<TContext>(IEnumerable<IStep<TContext>> steps, IEnumerable<ProgressInfo>? progresses = null) : CompoundStep<TContext>(steps, progresses), IStep<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <summary>
     /// Executes the child steps in parallel using the specified <see cref="ParallelOptions"/>.
@@ -14,11 +14,11 @@ public abstract class ParallelStep(IEnumerable<IStep> steps, IEnumerable<Progres
     /// <param name="context">The step execution context.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    protected override Task ExecuteStepsAsync(BuilderContext context, CancellationToken cancellationToken)
+    protected override Task ExecuteStepsAsync(TContext context, CancellationToken cancellationToken)
     {
         return System.Threading.Tasks.Parallel.ForEachAsync(Steps, ParallelOptions, ExecuteAsync);
 
-        async ValueTask ExecuteAsync(IStep step, CancellationToken _)
+        async ValueTask ExecuteAsync(IStep<TContext> step, CancellationToken _)
         {
             await context.ExecuteAsync(step);
             context.IncrementProgress(this);
