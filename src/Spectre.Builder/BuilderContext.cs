@@ -151,7 +151,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
                 {
                     if (progress.ShouldShowProgress)
                     {
-                        ProgressTask task = ctx.AddTask(progress.Name, autoStart: false, maxValue: double.PositiveInfinity);
+                        ProgressTask task = ctx.AddTask("not used", autoStart: false, maxValue: double.PositiveInfinity);
                         _progressById.Add(task.Id, (progress, level));
                         _consoleTasks.Add(progress, task);
                     }
