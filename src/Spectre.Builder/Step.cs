@@ -50,5 +50,5 @@ public abstract class Step : IStep
 
     void IStep.Prepare(BuilderContext context) => throw new NotImplementedException();
 
-    Task IStep.ExecuteAsync(BuilderContext context) => throw new NotImplementedException();
+    Task IStep.ExecuteAsync(BuilderContext context, CancellationToken cancellationToken) => throw new NotImplementedException();
 }

@@ -12,14 +12,15 @@ public abstract class ParallelStep(IEnumerable<IStep> steps, IEnumerable<Progres
     /// Executes the child steps in parallel using the specified <see cref="ParallelOptions"/>.
     /// </summary>
     /// <param name="context">The step execution context.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    protected override Task ExecuteStepsAsync(BuilderContext context)
+    protected override Task ExecuteStepsAsync(BuilderContext context, CancellationToken cancellationToken)
     {
         return System.Threading.Tasks.Parallel.ForEachAsync(Steps, ParallelOptions, ExecuteAsync);
 
-        async ValueTask ExecuteAsync(IStep step, CancellationToken cancellationToken)
+        async ValueTask ExecuteAsync(IStep step, CancellationToken _)
         {
-            await context.ExecuteAsync(step, cancellationToken);
+            await context.ExecuteAsync(step);
             context.IncrementProgress(this);
         }
     }

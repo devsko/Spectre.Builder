@@ -8,12 +8,13 @@ namespace Spectre.Builder;
 /// <summary>
 /// Provides context and progress management for executing steps with status reporting.
 /// </summary>
-public partial class BuilderContext
+public partial class BuilderContext(CancellationToken cancellationToken)
 {
     private readonly Dictionary<int, (IHasProgress, int)> _progresses = [];
     private readonly Dictionary<IHasProgress, ProgressTask> _consoleTasks = [];
     private readonly List<(IStep, string)> _errors = [];
     private readonly Dictionary<string, IResource> _resources = [];
+    private readonly CancellationToken _cancellationToken = cancellationToken;
 
     /// <summary>
     /// Gets or sets the current step level.
@@ -109,9 +110,8 @@ public partial class BuilderContext
     /// </summary>
     /// <param name="step">The step to execute.</param>
     /// <param name="status">An array of status information to track during execution.</param>
-    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task RunAsync(IStep step, StatusInfo[] status, CancellationToken cancellationToken)
+    public async Task RunAsync(IStep step, StatusInfo[] status)
     {
         ArgumentNullException.ThrowIfNull(step);
         ArgumentNullException.ThrowIfNull(status);
@@ -154,7 +154,7 @@ public partial class BuilderContext
                     }
                 });
 
-                await ExecuteAsync(step, cancellationToken);
+                await ExecuteAsync(step);
                 await setStatus;
 
                 ctx.Refresh();
@@ -165,9 +165,8 @@ public partial class BuilderContext
     /// Executes the specified step asynchronously within this context.
     /// </summary>
     /// <param name="step">The step to execute.</param>
-    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>A value task representing the asynchronous operation.</returns>
-    public async ValueTask ExecuteAsync(IStep step, CancellationToken cancellationToken)
+    public async ValueTask ExecuteAsync(IStep step)
     {
         ArgumentNullException.ThrowIfNull(step);
 
@@ -176,7 +175,7 @@ public partial class BuilderContext
             task.StartTask();
         }
 
-        await step.ExecuteAsync(this);
+        await step.ExecuteAsync(this, _cancellationToken);
 
         if (_consoleTasks.TryGetValue(step, out task))
         {

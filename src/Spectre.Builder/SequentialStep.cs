@@ -11,11 +11,11 @@ namespace Spectre.Builder;
 public abstract class SequentialStep(IEnumerable<IStep> steps, IEnumerable<ProgressInfo>? progresses = null) : CompoundStep(steps, progresses), IStep
 {
     /// <inheritdoc/>
-    protected override async Task ExecuteStepsAsync(BuilderContext context)
+    protected override async Task ExecuteStepsAsync(BuilderContext context, CancellationToken cancellationToken)
     {
         foreach (IStep step in Steps)
         {
-            await context.ExecuteAsync(step, default);
+            await context.ExecuteAsync(step);
             context.IncrementProgress(this);
         }
     }

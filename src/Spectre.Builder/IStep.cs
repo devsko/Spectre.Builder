@@ -18,6 +18,7 @@ public interface IStep : IHasProgress
     /// Executes the step asynchronously using the specified context.
     /// </summary>
     /// <param name="context">The context for the step execution.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task ExecuteAsync(BuilderContext context);
+    Task ExecuteAsync(BuilderContext context, CancellationToken cancellationToken);
 }

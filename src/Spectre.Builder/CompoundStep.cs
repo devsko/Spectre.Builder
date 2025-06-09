@@ -44,12 +44,12 @@ public abstract class CompoundStep(IEnumerable<IStep> steps, IEnumerable<Progres
     }
 
     /// <inheritdoc/>
-    async Task IStep.ExecuteAsync(BuilderContext context)
+    async Task IStep.ExecuteAsync(BuilderContext context, CancellationToken cancellationToken)
     {
         State = ProgressState.Running;
         context.SetTotal(this, Steps.Count);
 
-        await ExecuteStepsAsync(context);
+        await ExecuteStepsAsync(context, cancellationToken);
 
         State = Steps.All(step => step.State == ProgressState.Skip) ? ProgressState.Skip : ProgressState.Done;
         //context.SetComplete(this);
@@ -59,6 +59,7 @@ public abstract class CompoundStep(IEnumerable<IStep> steps, IEnumerable<Progres
     /// Executes the sub-steps asynchronously.
     /// </summary>
     /// <param name="context">The step context.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    protected abstract Task ExecuteStepsAsync(BuilderContext context);
+    protected abstract Task ExecuteStepsAsync(BuilderContext context, CancellationToken cancellationToken);
 }

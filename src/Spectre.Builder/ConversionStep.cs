@@ -64,7 +64,7 @@ public abstract class ConversionStep : Step, IStep
     }
 
     /// <inheritdoc/>
-    async Task IStep.ExecuteAsync(BuilderContext context)
+    async Task IStep.ExecuteAsync(BuilderContext context, CancellationToken cancellationToken)
     {
         Debug.Assert(_inputs is not null);
         Debug.Assert(_outputs is not null);
@@ -99,7 +99,7 @@ public abstract class ConversionStep : Step, IStep
         else
         {
             State = ProgressState.Running;
-            await ExecuteAsync(context, DateTime.UtcNow);
+            await ExecuteAsync(context, DateTime.UtcNow, cancellationToken);
             State = ProgressState.Done;
         }
 
@@ -136,6 +136,7 @@ public abstract class ConversionStep : Step, IStep
     /// </summary>
     /// <param name="builderContext">The step context.</param>
     /// <param name="timestamp">The timestamp when execution started.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    protected abstract Task ExecuteAsync(BuilderContext builderContext, DateTime timestamp);
+    protected abstract Task ExecuteAsync(BuilderContext builderContext, DateTime timestamp, CancellationToken cancellationToken);
 }
