@@ -28,19 +28,17 @@ public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps,
     {
         context.AddStep(this);
 
-        context.Level++;
+        context.CurrentLevel++;
         foreach (IStep<TContext> step in Steps)
         {
             step.Prepare(context);
         }
-
         foreach (ProgressInfo progress in Progresses)
         {
             progress.Parent = this;
             context.AddProgress(progress);
         }
-
-        context.Level--;
+        context.CurrentLevel--;
     }
 
     /// <inheritdoc/>

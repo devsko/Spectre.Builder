@@ -14,20 +14,10 @@ public partial class BuilderContext<TContext>
     /// <param name="context">The step context.</param>
     private abstract class StepProgressColumn(TContext context) : ProgressColumn
     {
-        /// <summary>
-        /// Gets the step and its level from the progress task.
-        /// </summary>
-        /// <param name="task">The progress task.</param>
-        /// <returns>A tuple containing the step and its level.</returns>
-        protected (IHasProgress Step, int Level) GetStepAndLevel(ProgressTask task)
-        {
-            return context.Progresses[int.Parse(task.Description)];
-        }
-
         /// <inheritdoc/>
         public sealed override IRenderable Render(RenderOptions options, ProgressTask task, TimeSpan deltaTime)
         {
-            (IHasProgress step, int level) = GetStepAndLevel(task);
+            (IHasProgress step, int level) = context.GetProgressAndLevel(task.Id);
             return Render(options, task, step, level, deltaTime);
         }
 

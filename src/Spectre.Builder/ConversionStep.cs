@@ -54,13 +54,13 @@ public abstract class ConversionStep<TContext> : Step<TContext>, IStep<TContext>
 
         context.AddStep(this);
 
-        context.Level++;
+        context.CurrentLevel++;
         foreach (ProgressInfo progress in GetProgressInfos())
         {
             progress.Parent = this;
             context.AddProgress(progress);
         }
-        context.Level--;
+        context.CurrentLevel--;
     }
 
     /// <inheritdoc/>
