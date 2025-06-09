@@ -9,15 +9,33 @@ namespace Spectre.Builder;
 /// <summary>
 /// Provides context and progress management for executing steps with status reporting.
 /// </summary>
-public partial class BuilderContext<TContext>(CancellationToken cancellationToken) : IBuilderContext<TContext> where TContext : class, IBuilderContext<TContext>
+public partial class BuilderContext<TContext> : IBuilderContext<TContext> where TContext : class, IBuilderContext<TContext>
 {
     private readonly List<(IHasProgress, int)> _progresses = [];
     private readonly Dictionary<int, (IHasProgress, int)> _progressById = [];
     private readonly Dictionary<IHasProgress, ProgressTask> _consoleTasks = [];
     private readonly List<(IStep<TContext>, string)> _errors = [];
     private readonly Dictionary<string, IResource> _resources = [];
-    private readonly CancellationToken _cancellationToken = cancellationToken;
+    private readonly CancellationToken _cancellationToken;
     private int _currentLevel;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BuilderContext{TContext}"/> class
+    /// with the specified cancellation token.
+    /// </summary>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if the current instance does not match the generic type parameter <typeparamref name="TContext"/>.
+    /// </exception>
+    public BuilderContext(CancellationToken cancellationToken)
+    {
+        if (this is not TContext)
+        {
+            throw new InvalidOperationException();
+        }
+
+        _cancellationToken = cancellationToken;
+    }
 
     /// <inheritdoc/>
     int IBuilderContext<TContext>.CurrentLevel
