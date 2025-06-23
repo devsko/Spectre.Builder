@@ -6,24 +6,24 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents progress information for a step, providing context for progress tracking.
 /// </summary>
-public class ProgressInfo(string name) : IHasProgress
+public class ProgressInfo<TContext>(string name) : IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <summary>
     /// Gets or sets the parent step associated with this progress information.
     /// </summary>
-    public IHasProgress? Parent { get; set; }
+    public IHasProgress<TContext>? Parent { get; set; }
 
     /// <summary>
     /// Gets the name of the progress information.
     /// </summary>
-    public string Name => name;
+    public string GetName(TContext context) => name;
 
     /// <inheritdoc/>
-    bool IHasProgress.ShouldShowProgress => Parent?.ShouldShowProgress ?? throw new InvalidOperationException();
+    bool IHasProgress<TContext>.ShouldShowProgress => Parent?.ShouldShowProgress ?? throw new InvalidOperationException();
 
     /// <inheritdoc/>
-    ProgressType IHasProgress.Type => ProgressType.ValueRaw;
+    ProgressType IHasProgress<TContext>.Type => ProgressType.ValueRaw;
 
     /// <inheritdoc/>
-    ProgressState IHasProgress.State => Parent?.State ?? throw new InvalidOperationException();
+    ProgressState IHasProgress<TContext>.State => Parent?.State ?? throw new InvalidOperationException();
 }

@@ -55,7 +55,7 @@ public abstract class ConversionStep<TContext> : Step<TContext>, IStep<TContext>
         context.AddStep(this);
 
         context.CurrentLevel++;
-        foreach (ProgressInfo progress in GetProgressInfos())
+        foreach (ProgressInfo<TContext> progress in GetProgressInfos())
         {
             progress.Parent = this;
             context.AddProgress(progress);
@@ -129,7 +129,7 @@ public abstract class ConversionStep<TContext> : Step<TContext>, IStep<TContext>
     /// Gets the progress information items for this step.
     /// </summary>
     /// <returns>An enumerable of progress information items.</returns>
-    protected virtual IEnumerable<ProgressInfo> GetProgressInfos() => [];
+    protected virtual IEnumerable<ProgressInfo<TContext>> GetProgressInfos() => [];
 
     /// <summary>
     /// Executes the conversion step asynchronously.

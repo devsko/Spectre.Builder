@@ -40,13 +40,18 @@ public abstract class Step<TContext> : IStep<TContext> where TContext : class, I
     /// <inheritdoc/>
     public ProgressState State { get; protected set; }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Gets the name of the progress item.
+    /// </summary>
     public virtual string Name => GetType().Name;
 
     /// <inheritdoc/>
     public virtual bool ShouldShowProgress => true;
 
-    ProgressType IHasProgress.Type => throw new NotImplementedException();
+    /// <inheritdoc/>
+    public virtual string GetName(TContext context) => Name;
+
+    ProgressType IHasProgress<TContext>.Type => throw new NotImplementedException();
 
     void IStep<TContext>.Prepare(TContext context) => throw new NotImplementedException();
 

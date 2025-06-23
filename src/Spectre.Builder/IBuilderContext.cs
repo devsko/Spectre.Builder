@@ -20,10 +20,10 @@ public interface IBuilderContext<TContext> where TContext : class, IBuilderConte
     int CurrentLevel { get; set; }
 
     /// <summary>
-    /// Adds a <see cref="ProgressInfo"/> instance to the context for progress tracking.
+    /// Adds a <see cref="ProgressInfo{TContext}"/> instance to the context for progress tracking.
     /// </summary>
     /// <param name="progress">The progress information to add.</param>
-    void AddProgress(ProgressInfo progress);
+    void AddProgress(ProgressInfo<TContext> progress);
 
     /// <summary>
     /// Adds a step to the context for execution and progress tracking.
@@ -36,9 +36,9 @@ public interface IBuilderContext<TContext> where TContext : class, IBuilderConte
     /// </summary>
     /// <param name="id">The identifier of the progress item.</param>
     /// <returns>
-    /// A tuple containing the <see cref="IHasProgress"/> instance and its nesting level.
+    /// A tuple containing the <see cref="IHasProgress{TContext}"/> instance and its nesting level.
     /// </returns>
-    (IHasProgress, int) GetProgressAndLevel(int id);
+    (IHasProgress<TContext>, int) GetProgressAndLevel(int id);
 
     /// <summary>
     /// Executes the specified step asynchronously within the context.
@@ -67,19 +67,19 @@ public interface IBuilderContext<TContext> where TContext : class, IBuilderConte
     /// </summary>
     /// <param name="progress">The progress item to update.</param>
     /// <param name="total">The total value to set.</param>
-    void SetTotal(IHasProgress progress, long total);
+    void SetTotal(IHasProgress<TContext> progress, long total);
 
     /// <summary>
     /// Sets the current progress value for the specified progress item.
     /// </summary>
     /// <param name="progress">The progress item to update.</param>
     /// <param name="value">The progress value to set.</param>
-    void SetProgress(IHasProgress progress, long value);
+    void SetProgress(IHasProgress<TContext> progress, long value);
 
     /// <summary>
     /// Increments the progress value for the specified progress item by the given amount.
     /// </summary>
     /// <param name="progress">The progress item to update.</param>
     /// <param name="amount">The amount to increment the progress by. Defaults to 1.</param>
-    void IncrementProgress(IHasProgress progress, long amount = 1);
+    void IncrementProgress(IHasProgress<TContext> progress, long amount = 1);
 }

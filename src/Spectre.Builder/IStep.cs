@@ -10,7 +10,7 @@ namespace Spectre.Builder;
 /// <typeparam name="TContext">
 /// The type of the builder context used for step execution. Must inherit from <see cref="BuilderContext{TContext}"/>.
 /// </typeparam>
-public interface IStep<TContext> : IHasProgress where TContext : class, IBuilderContext<TContext>
+public interface IStep<TContext> : IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <summary>
     /// Prepares the step for execution using the specified context.

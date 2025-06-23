@@ -11,9 +11,9 @@ namespace Spectre.Builder;
 /// </summary>
 public partial class BuilderContext<TContext> : IBuilderContext<TContext> where TContext : class, IBuilderContext<TContext>
 {
-    private readonly List<(IHasProgress, int)> _progresses = [];
-    private readonly Dictionary<int, (IHasProgress, int)> _progressById = [];
-    private readonly Dictionary<IHasProgress, ProgressTask> _consoleTasks = [];
+    private readonly List<(IHasProgress<TContext>, int)> _progresses = [];
+    private readonly Dictionary<int, (IHasProgress<TContext>, int)> _progressById = [];
+    private readonly Dictionary<IHasProgress<TContext>, ProgressTask> _consoleTasks = [];
     private readonly List<(IStep<TContext>, string)> _errors = [];
     private readonly Dictionary<string, IResource> _resources = [];
     private readonly CancellationToken _cancellationToken;
@@ -51,13 +51,13 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     }
 
     /// <inheritdoc/>
-    public void AddProgress(ProgressInfo progress)
+    public void AddProgress(ProgressInfo<TContext> progress)
     {
         _progresses.Add((progress, _currentLevel));
     }
 
     /// <inheritdoc/>
-    public (IHasProgress, int) GetProgressAndLevel(int id)
+    public (IHasProgress<TContext>, int) GetProgressAndLevel(int id)
     {
         return _progressById[id];
     }
@@ -89,7 +89,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     public DirectoryResource GetDirectoryResource(string key) => (DirectoryResource)_resources[key];
 
     /// <inheritdoc/>
-    public void SetTotal(IHasProgress progress, long total)
+    public void SetTotal(IHasProgress<TContext> progress, long total)
     {
         if (_consoleTasks.TryGetValue(progress, out ProgressTask? task))
         {
@@ -98,7 +98,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     }
 
     /// <inheritdoc/>
-    public void SetProgress(IHasProgress progress, long value)
+    public void SetProgress(IHasProgress<TContext> progress, long value)
     {
         if (_consoleTasks.TryGetValue(progress, out ProgressTask? task))
         {
@@ -107,7 +107,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     }
 
     /// <inheritdoc/>
-    public void IncrementProgress(IHasProgress progress, long amount = 1)
+    public void IncrementProgress(IHasProgress<TContext> progress, long amount = 1)
     {
         if (_consoleTasks.TryGetValue(progress, out ProgressTask? task))
         {
@@ -122,7 +122,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     /// <param name="step">The step to execute.</param>
     /// <param name="status">An array of status information to track during execution.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task RunAsync(IStep<TContext> step, StatusInfo[] status)
+    public async Task RunAsync(IStep<TContext> step, StatusInfo<TContext>[] status)
     {
         ArgumentNullException.ThrowIfNull(step);
         ArgumentNullException.ThrowIfNull(status);
@@ -131,8 +131,8 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
 
         step.Prepare(context);
 
-        AddProgress(new EmptyInfo { Parent = step });
-        foreach (StatusInfo statusInfo in status)
+        AddProgress(new EmptyInfo<TContext> { Parent = step });
+        foreach (StatusInfo<TContext> statusInfo in status)
         {
             statusInfo.Parent = step;
             AddProgress(statusInfo);
@@ -147,7 +147,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
                 new ElapsedColumn(context)])
             .StartAsync(async ctx =>
             {
-                foreach ((IHasProgress progress, int level) in _progresses)
+                foreach ((IHasProgress<TContext> progress, int level) in _progresses)
                 {
                     if (progress.ShouldShowProgress)
                     {
@@ -161,7 +161,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
                 {
                     while (step.State is ProgressState.Running or ProgressState.Wait)
                     {
-                        foreach (StatusInfo status in status)
+                        foreach (StatusInfo<TContext> status in status)
                         {
                             SetProgress(status, status.GetValue());
                         }

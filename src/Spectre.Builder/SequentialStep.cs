@@ -8,7 +8,7 @@ namespace Spectre.Builder;
 /// </summary>
 /// <param name="steps">The steps to execute sequentially.</param>
 /// <param name="progresses">Optional progress information for the step.</param>
-public abstract class SequentialStep<TContext>(IEnumerable<IStep<TContext>> steps, IEnumerable<ProgressInfo>? progresses = null) : CompoundStep<TContext>(steps, progresses), IStep<TContext> where TContext : class, IBuilderContext<TContext>
+public abstract class SequentialStep<TContext>(IEnumerable<IStep<TContext>> steps, IEnumerable<ProgressInfo<TContext>>? progresses = null) : CompoundStep<TContext>(steps, progresses), IStep<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <inheritdoc/>
     protected override async Task ExecuteStepsAsync(TContext context, CancellationToken cancellationToken)

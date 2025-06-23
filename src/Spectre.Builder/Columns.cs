@@ -14,10 +14,12 @@ public partial class BuilderContext<TContext>
     /// <param name="context">The step context.</param>
     private abstract class StepProgressColumn(TContext context) : ProgressColumn
     {
+        protected TContext Context { get; } = context;
+
         /// <inheritdoc/>
         public sealed override IRenderable Render(RenderOptions options, ProgressTask task, TimeSpan deltaTime)
         {
-            (IHasProgress step, int level) = context.GetProgressAndLevel(task.Id);
+            (IHasProgress<TContext> step, int level) = Context.GetProgressAndLevel(task.Id);
             return Render(options, task, step, level, deltaTime);
         }
 
@@ -30,7 +32,7 @@ public partial class BuilderContext<TContext>
         /// <param name="level">The level of the step.</param>
         /// <param name="deltaTime">The time since the last render.</param>
         /// <returns>The rendered column.</returns>
-        protected abstract IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress step, int level, TimeSpan deltaTime);
+        protected abstract IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress<TContext> step, int level, TimeSpan deltaTime);
     }
 
     /// <summary>
@@ -40,9 +42,9 @@ public partial class BuilderContext<TContext>
     private sealed class NameColumn(TContext context) : StepProgressColumn(context)
     {
         /// <inheritdoc/>
-        protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress step, int level, TimeSpan deltaTime)
+        protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress<TContext> step, int level, TimeSpan deltaTime)
         {
-            return new Markup($"[conceal][/]{new string(' ', level * 2)}{step.Name}").Overflow(Overflow.Ellipsis);
+            return new Markup($"[conceal][/]{new string(' ', level * 2)}{step.GetName(Context)}").Overflow(Overflow.Ellipsis);
         }
     }
 
@@ -55,7 +57,7 @@ public partial class BuilderContext<TContext>
         private static readonly Markup _empty = new("");
 
         /// <inheritdoc/>
-        protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress step, int level, TimeSpan deltaTime)
+        protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress<TContext> step, int level, TimeSpan deltaTime)
         {
             return ((step.State, step.Type & ProgressType.NumericMask) switch
             {
@@ -86,7 +88,7 @@ public partial class BuilderContext<TContext>
         protected override bool NoWrap => true;
 
         /// <inheritdoc/>
-        protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress step, int level, TimeSpan deltaTime)
+        protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress<TContext> step, int level, TimeSpan deltaTime)
         {
             return (step.State is ProgressState.Running or ProgressState.Done) &&
                 (step.Type & ProgressType.ElapsedMask) is ProgressType.ElapsedVisible &&
@@ -109,9 +111,9 @@ public partial class BuilderContext<TContext>
     private sealed class ValueColumn(TContext context) : StepProgressColumn(context)
     {
         /// <inheritdoc/>
-        protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress step, int level, TimeSpan deltaTime)
+        protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress<TContext> step, int level, TimeSpan deltaTime)
         {
-            if ((step.State is ProgressState.Running or ProgressState.Done || step is StatusInfo))
+            if ((step.State is ProgressState.Running or ProgressState.Done || step is StatusInfo<TContext>))
             {
                 Markup result;
                 switch (step.Type & ProgressType.ValueMask)

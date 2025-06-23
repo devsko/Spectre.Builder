@@ -6,7 +6,7 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents a step that contains multiple sub-steps and progress information.
 /// </summary>
-public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps, IEnumerable<ProgressInfo>? progresses) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
+public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps, IEnumerable<ProgressInfo<TContext>>? progresses) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <summary>
     /// Gets the list of sub-steps contained in this compound step.
@@ -16,7 +16,7 @@ public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps,
     /// <summary>
     /// Gets the list of progress information items associated with this compound step.
     /// </summary>
-    protected List<ProgressInfo> Progresses { get; } = [.. progresses ?? []];
+    protected List<ProgressInfo<TContext>> Progresses { get; } = [.. progresses ?? []];
 
     /// <summary>
     /// Gets the type of progress for this step.
@@ -33,7 +33,7 @@ public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps,
         {
             step.Prepare(context);
         }
-        foreach (ProgressInfo progress in Progresses)
+        foreach (ProgressInfo<TContext> progress in Progresses)
         {
             progress.Parent = this;
             context.AddProgress(progress);
