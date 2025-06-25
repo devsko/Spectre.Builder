@@ -28,24 +28,6 @@ public abstract class ConversionStep<TContext> : Step<TContext>, IStep<TContext>
     /// </summary>
     protected virtual bool ShowProgressAsDataSize => true;
 
-    /// <summary>
-    /// Gets a value indicating whether to hide the step when skipped.
-    /// </summary>
-    protected virtual bool HideWhenSkipped => false;
-
-    /// <inheritdoc/>
-    public override bool ShouldShowProgress
-    {
-        get
-        {
-            Debug.Assert(_inputs is not null);
-            Debug.Assert(_outputs is not null);
-
-            return !HideWhenSkipped || _outputs.Any(output => !output.IsAvailable) || _inputs.Length != 0;
-            // TODO Should there be a MaxAge?
-        }
-    }
-
     /// <inheritdoc/>
     void IStep<TContext>.Prepare(TContext context)
     {
