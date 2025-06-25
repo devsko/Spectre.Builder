@@ -14,6 +14,11 @@ public interface IResource
     string Name { get; }
 
     /// <summary>
+    /// Gets a value indicating whether the resource is required.
+    /// </summary>
+    bool IsRequired { get; }
+
+    /// <summary>
     /// Gets a value indicating whether the resource is available.
     /// </summary>
     bool IsAvailable { get; }
@@ -22,4 +27,11 @@ public interface IResource
     /// Gets the date and time when the resource was last updated, or null if unknown.
     /// </summary>
     DateTimeOffset? LastUpdated { get; }
+
+    /// <summary>
+    /// Determines the availability of the resource and when it was last updated asynchronously.
+    /// </summary>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    Task DetermineAvailabilityAsync(CancellationToken cancellationToken);
 }

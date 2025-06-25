@@ -6,14 +6,22 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents a downloadable resource accessible via HTTP.
 /// </summary>
-public class DownloadableResource : IResource
+/// <remarks>
+/// Initializes a new instance of the <see cref="DownloadableResource"/> class.
+/// </remarks>
+/// <param name="uri">The URI of the downloadable resource.</param>
+public class DownloadableResource(Uri uri) : IResource
 {
     private readonly HttpClient _client = new();
+    private HttpResponseMessage? _response;
 
     /// <summary>
     /// Gets the URI of the downloadable resource.
     /// </summary>
-    public Uri Uri { get; private set; }
+    public Uri Uri { get; private set; } = uri;
+
+    /// <inheritdoc/>
+    public bool IsRequired { get; init; } = true;
 
     /// <inheritdoc/>
     public bool IsAvailable { get; private set; }
@@ -26,43 +34,32 @@ public class DownloadableResource : IResource
     /// </summary>
     public long? Length { get; private set; }
 
-    private DownloadableResource(Uri uri, HttpClient client)
-    {
-        Uri = uri;
-        _client = client;
-    }
+    /// <inheritdoc/>
+    public string Name => Uri.ToString();
 
     /// <summary>
-    /// Asynchronously creates a <see cref="DownloadableResource"/> for the specified URI.
+    /// Gets the URI of the downloadable resource.
     /// </summary>
-    /// <param name="uri">The URI of the resource to download.</param>
-    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
-    /// <returns>A task that represents the asynchronous creation operation. The value of the TResult parameter contains the created <see cref="DownloadableResource"/>.</returns>
-    public static async Task<DownloadableResource> CreateAsync(Uri uri, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    async Task IResource.DetermineAvailabilityAsync(CancellationToken cancellationToken)
     {
-        HttpClient client = new();
-        bool isAvailable = false;
-        DateTimeOffset? lastUpdated = null;
-        long? length = null;
-
         try
         {
-            HttpResponseMessage response = await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            if (response.IsSuccessStatusCode)
+            _response = await _client.GetAsync(Uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            if (_response.IsSuccessStatusCode)
             {
-                isAvailable = true;
-                lastUpdated = response.Content.Headers.LastModified;
-                length = response.Content.Headers.ContentLength;
+                IsAvailable = true;
+                LastUpdated = _response.Content.Headers.LastModified;
+                Length = _response.Content.Headers.ContentLength;
+
+                return;
             }
         }
         catch (HttpRequestException)
         { }
 
-        return new DownloadableResource(uri, client) { IsAvailable = isAvailable, LastUpdated = lastUpdated, Length = length };
+        _response?.Dispose();
     }
-
-    /// <inheritdoc/>
-    public string Name => Uri.ToString();
 
     /// <summary>
     /// Asynchronously downloads the resource as a stream.
@@ -72,7 +69,12 @@ public class DownloadableResource : IResource
     /// <returns>A task that represents the asynchronous download operation. The value of the TResult parameter contains the stream of the downloaded resource.</returns>
     public async Task<Stream> DownloadAsync(Action<int>? progress = null, CancellationToken cancellationToken = default)
     {
-        Stream stream = await (await _client.GetAsync(Uri, cancellationToken)).Content.ReadAsStreamAsync(cancellationToken);
+        if (_response is null)
+        {
+            throw new InvalidOperationException("Resource availability must be determined before downloading.");
+        }
+
+        Stream stream = await _response.Content.ReadAsStreamAsync(cancellationToken);
         if (progress is not null)
         {
             stream = new ProgressStream(stream, progress);

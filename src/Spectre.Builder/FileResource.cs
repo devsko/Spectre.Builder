@@ -11,6 +11,9 @@ public class FileResource(string path) : IResource
     private readonly FileInfo _file = new(path);
 
     /// <inheritdoc/>
+    public bool IsRequired { get; init; } = true;
+
+    /// <inheritdoc/>
     public string Name => _file.Name;
 
     /// <summary>
@@ -19,21 +22,13 @@ public class FileResource(string path) : IResource
     public string Path => _file.FullName;
 
     /// <inheritdoc/>
-    public bool IsAvailable
-    {
-        get
-        {
-            _file.Refresh();
-            return _file.Exists;
-        }
-    }
+    public bool IsAvailable => _file.Exists;
 
     /// <inheritdoc/>
     public DateTimeOffset? LastUpdated
     {
         get
         {
-            _file.Refresh();
             if (!_file.Exists)
             {
                 return null;
@@ -44,6 +39,13 @@ public class FileResource(string path) : IResource
 
             return created > lastWrite ? created : lastWrite;
         }
+    }
+
+    /// <inheritdoc/>
+    Task IResource.DetermineAvailabilityAsync(CancellationToken cancellationToken)
+    {
+        _file.Refresh();
+        return Task.CompletedTask;
     }
 
     /// <summary>

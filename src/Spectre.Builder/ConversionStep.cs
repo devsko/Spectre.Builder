@@ -69,9 +69,14 @@ public abstract class ConversionStep<TContext> : Step<TContext>, IStep<TContext>
         Debug.Assert(_inputs is not null);
         Debug.Assert(_outputs is not null);
 
-        foreach (IResource missing in _inputs.Where(input => !input.IsAvailable))
+        foreach (IResource resource in _inputs.Concat(_outputs))
         {
-            context.Fail(this, $"Input {missing.Name} not available.");
+            await resource.DetermineAvailabilityAsync(cancellationToken);
+        }
+
+        foreach (IResource missing in _inputs.Where(input => input.IsRequired && !input.IsAvailable))
+        {
+            context.Fail(this, $"Required input {missing.Name} not available.");
         }
 
         context.EnsureValid();

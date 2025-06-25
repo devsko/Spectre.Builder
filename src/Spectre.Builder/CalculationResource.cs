@@ -13,8 +13,13 @@ public class CalculationResource(IResource targetResource) : IResource
     public string Name => string.Empty;
 
     /// <inheritdoc/>
+    public bool IsRequired => true;
+
+    /// <inheritdoc/>
     public bool IsAvailable => true;
 
     /// <inheritdoc/>
     public DateTimeOffset? LastUpdated => targetResource.LastUpdated;
+
+    Task IResource.DetermineAvailabilityAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

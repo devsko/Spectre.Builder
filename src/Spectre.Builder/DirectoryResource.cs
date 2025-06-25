@@ -17,6 +17,9 @@ public class DirectoryResource(string path) : IResource
     private readonly FileInfo _dirUpdateFile = new(System.IO.Path.Combine(path, UpdateFileName));
 
     /// <inheritdoc/>
+    public bool IsRequired { get; init; } = true;
+
+    /// <inheritdoc/>
     public string Name => _directory.Name;
 
     /// <summary>
@@ -29,7 +32,6 @@ public class DirectoryResource(string path) : IResource
     {
         get
         {
-            _directory.Refresh();
             return _directory.Exists;
         }
     }
@@ -41,9 +43,16 @@ public class DirectoryResource(string path) : IResource
     {
         get
         {
-            _dirUpdateFile.Refresh();
             return _dirUpdateFile.Exists ? _dirUpdateFile.LastWriteTimeUtc : null;
         }
+    }
+
+    /// <inheritdoc/>
+    Task IResource.DetermineAvailabilityAsync(CancellationToken cancellationToken)
+    {
+        _directory.Refresh();
+        _dirUpdateFile.Refresh();
+        return Task.CompletedTask;
     }
 
     /// <summary>
