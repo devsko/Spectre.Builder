@@ -110,6 +110,11 @@ public abstract class ConversionStep<TContext> : Step<TContext>, IStep<TContext>
 
         //context.SetComplete(this);
 
+        foreach (IResource resource in _outputs)
+        {
+            await resource.DetermineAvailabilityAsync(cancellationToken);
+        }
+
         foreach (IResource missing in _outputs.Where(output => !output.IsAvailable))
         {
             context.Fail(this, $"Output {missing.Name} not created.");

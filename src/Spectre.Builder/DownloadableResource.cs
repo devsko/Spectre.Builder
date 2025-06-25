@@ -43,6 +43,11 @@ public class DownloadableResource(Uri uri) : IResource
     /// <inheritdoc/>
     async Task IResource.DetermineAvailabilityAsync(CancellationToken cancellationToken)
     {
+        if (_response is not null)
+        {
+            return;
+        }
+
         try
         {
             _response = await _client.GetAsync(Uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -59,6 +64,7 @@ public class DownloadableResource(Uri uri) : IResource
         { }
 
         _response?.Dispose();
+        _response = null;
     }
 
     /// <summary>
