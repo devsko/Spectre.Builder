@@ -87,6 +87,10 @@ public abstract class ConversionStep<TContext> : Step<TContext>, IStep<TContext>
         {
             execution = StepExecution.Necessary;
         }
+        else if (_inputs.Any(input => !input.IsAvailable))
+        {
+            execution = StepExecution.Redundant;
+        }
         else
         {
             DateTimeOffset newestInput = _inputs.Length != 0 ? _inputs.Min(input => input.LastUpdated ?? DateTimeOffset.MaxValue) : DateTimeOffset.MinValue;
