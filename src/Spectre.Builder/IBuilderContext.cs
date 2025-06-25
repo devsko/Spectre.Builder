@@ -44,10 +44,11 @@ public interface IBuilderContext<TContext> where TContext : class, IBuilderConte
     /// Executes the specified step asynchronously within the context.
     /// </summary>
     /// <param name="step">The step to execute.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>
     /// A <see cref="Task"/> representing the asynchronous execution of the step.
     /// </returns>
-    Task ExecuteAsync(IStep<TContext> step);
+    Task ExecuteAsync(IStep<TContext> step, CancellationToken cancellationToken);
 
     /// <summary>
     /// Marks the specified step as failed and records the associated error message.

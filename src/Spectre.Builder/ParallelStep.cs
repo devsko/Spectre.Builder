@@ -16,11 +16,12 @@ public abstract class ParallelStep<TContext>(IEnumerable<IStep<TContext>> steps,
     /// <returns>A task representing the asynchronous operation.</returns>
     protected override Task ExecuteStepsAsync(TContext context, CancellationToken cancellationToken)
     {
+        ParallelOptions.CancellationToken = cancellationToken;
         return System.Threading.Tasks.Parallel.ForEachAsync(Steps, ParallelOptions, ExecuteAsync);
 
-        async ValueTask ExecuteAsync(IStep<TContext> step, CancellationToken _)
+        async ValueTask ExecuteAsync(IStep<TContext> step, CancellationToken cancellationToken)
         {
-            await context.ExecuteAsync(step);
+            await context.ExecuteAsync(step, cancellationToken);
             context.IncrementProgress(this);
         }
     }

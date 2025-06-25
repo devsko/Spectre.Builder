@@ -169,7 +169,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
                     }
                 });
 
-                await ExecuteAsync(step);
+                await ExecuteAsync(step, _cancellationToken);
                 await setStatus;
 
                 ctx.Refresh();
@@ -177,7 +177,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     }
 
     /// <inheritdoc/>
-    public async Task ExecuteAsync(IStep<TContext> step)
+    public async Task ExecuteAsync(IStep<TContext> step, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(step);
 
@@ -186,7 +186,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
             task.StartTask();
         }
 
-        await step.ExecuteAsync(Unsafe.As<TContext>(this), _cancellationToken);
+        await step.ExecuteAsync(Unsafe.As<TContext>(this), cancellationToken);
 
         if (_consoleTasks.TryGetValue(step, out task))
         {

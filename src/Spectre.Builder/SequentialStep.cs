@@ -15,7 +15,7 @@ public abstract class SequentialStep<TContext>(IEnumerable<IStep<TContext>> step
     {
         foreach (IStep<TContext> step in Steps)
         {
-            await context.ExecuteAsync(step);
+            await context.ExecuteAsync(step, cancellationToken);
             context.IncrementProgress(this);
         }
     }
