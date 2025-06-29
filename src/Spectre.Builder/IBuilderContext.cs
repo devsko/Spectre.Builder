@@ -14,22 +14,23 @@ namespace Spectre.Builder;
 public interface IBuilderContext<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <summary>
-    /// Gets or sets the current execution level within the build process.
-    /// This value can be used to track the nesting or depth of steps.
+    /// Adds a progress item to the builder context at the specified nesting level.
     /// </summary>
-    int CurrentLevel { get; set; }
+    /// <param name="progress">The progress item to add.</param>
+    /// <param name="insertAfter">
+    /// The progress item after which the new item should be inserted. 
+    /// If null, the new item is added at the end.
+    /// </param>
+    /// <param name="level">The nesting level of the progress item.</param>
+    /// <returns>The added progress item.</returns>
+    IHasProgress<TContext> Add(IHasProgress<TContext> progress, IHasProgress<TContext>? insertAfter, int level);
 
     /// <summary>
-    /// Adds a <see cref="ProgressInfo{TContext}"/> instance to the context for progress tracking.
+    /// Retrieves the nesting level of the specified progress item.
     /// </summary>
-    /// <param name="progress">The progress information to add.</param>
-    void AddProgress(ProgressInfo<TContext> progress);
-
-    /// <summary>
-    /// Adds a step to the context for execution and progress tracking.
-    /// </summary>
-    /// <param name="step">The step to add.</param>
-    void AddStep(IStep<TContext> step);
+    /// <param name="progress">The progress item whose level is to be retrieved.</param>
+    /// <returns>The nesting level of the specified progress item.</returns>
+    int GetLevel(IHasProgress<TContext> progress);
 
     /// <summary>
     /// Retrieves the progress information and its associated nesting level for a given identifier.

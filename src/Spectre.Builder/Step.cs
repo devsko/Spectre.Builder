@@ -38,6 +38,9 @@ public abstract class Step<TContext> : IStep<TContext> where TContext : class, I
     public static ParallelStep<TContext> Parallel(string name, IEnumerable<IStep<TContext>> steps, ParallelOptions? options = null) => new ParallelStepImpl(name, steps, options ?? new ParallelOptions());
 
     /// <inheritdoc/>
+    IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => this;
+
+    /// <inheritdoc/>
     public ProgressState State { get; protected set; }
 
     /// <summary>
@@ -53,7 +56,7 @@ public abstract class Step<TContext> : IStep<TContext> where TContext : class, I
 
     ProgressType IHasProgress<TContext>.Type => throw new NotImplementedException();
 
-    void IStep<TContext>.Prepare(TContext context) => throw new NotImplementedException();
+    IHasProgress<TContext> IStep<TContext>.Prepare(TContext context, IHasProgress<TContext>? insertAfter, int level) => throw new NotImplementedException();
 
     Task IStep<TContext>.ExecuteAsync(TContext context, CancellationToken cancellationToken) => throw new NotImplementedException();
 }

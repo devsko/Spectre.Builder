@@ -13,10 +13,13 @@ namespace Spectre.Builder;
 public interface IStep<TContext> : IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <summary>
-    /// Prepares the step for execution using the specified context.
+    /// Prepares the step for execution by setting its position in the progress hierarchy.
     /// </summary>
-    /// <param name="context">The context for the step execution.</param>
-    void Prepare(TContext context);
+    /// <param name="context">The context for the step preparation.</param>
+    /// <param name="insertAfter">The progress item after which this step should be inserted.</param>
+    /// <param name="level">The hierarchical level of the step.</param>
+    /// <returns>The progress item representing this step.</returns>
+    IHasProgress<TContext> Prepare(TContext context, IHasProgress<TContext>? insertAfter, int level);
 
     /// <summary>
     /// Executes the step asynchronously using the specified context.

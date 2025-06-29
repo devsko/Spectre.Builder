@@ -13,7 +13,7 @@ namespace Spectre.Builder;
 public class DownloadableResource(Uri uri) : IResource
 {
     private readonly HttpClient _client = new();
-    private HttpResponseMessage? _response;
+    private bool _availabilityChecked;
 
     /// <summary>
     /// Gets the URI of the downloadable resource.
@@ -43,28 +43,27 @@ public class DownloadableResource(Uri uri) : IResource
     /// <inheritdoc/>
     async Task IResource.DetermineAvailabilityAsync(CancellationToken cancellationToken)
     {
-        if (_response is not null)
+        if (_availabilityChecked)
         {
             return;
         }
 
+        _availabilityChecked = true;
+
         try
         {
-            _response = await _client.GetAsync(Uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            if (_response.IsSuccessStatusCode)
+            using HttpResponseMessage response = await _client.GetAsync(Uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+            if (response.IsSuccessStatusCode)
             {
                 IsAvailable = true;
-                LastUpdated = _response.Content.Headers.LastModified;
-                Length = _response.Content.Headers.ContentLength;
+                LastUpdated = response.Content.Headers.LastModified;
+                Length = response.Content.Headers.ContentLength;
 
                 return;
             }
         }
         catch (HttpRequestException)
         { }
-
-        _response?.Dispose();
-        _response = null;
     }
 
     /// <summary>
@@ -75,12 +74,8 @@ public class DownloadableResource(Uri uri) : IResource
     /// <returns>A task that represents the asynchronous download operation. The value of the TResult parameter contains the stream of the downloaded resource.</returns>
     public async Task<Stream> DownloadAsync(Action<int>? progress = null, CancellationToken cancellationToken = default)
     {
-        if (_response is null)
-        {
-            throw new InvalidOperationException("Resource availability must be determined before downloading.");
-        }
-
-        Stream stream = await _response.Content.ReadAsStreamAsync(cancellationToken);
+        HttpResponseMessage response = await _client.GetAsync(Uri, cancellationToken).ConfigureAwait(false);
+        Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         if (progress is not null)
         {
             stream = new ProgressStream(stream, progress);

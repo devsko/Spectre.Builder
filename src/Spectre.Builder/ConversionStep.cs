@@ -1,17 +1,14 @@
 ﻿// Copyright (c) devsko. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Diagnostics;
-
 namespace Spectre.Builder;
 
 /// <summary>
 /// Represents an abstract step that performs a conversion operation with progress tracking.
 /// </summary>
-public abstract class ConversionStep<TContext> : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
+public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] outputs, ProgressInfo<TContext>[]? progressInfos = null) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
 {
-    private IResource[]? _inputs;
-    private IResource[]? _outputs;
+    IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => ((IHasProgress<TContext>?)progressInfos?.LastOrDefault())?.SelfOrLastChild ?? this;
 
     /// <summary>
     /// Gets the type of progress information to display for this step.
@@ -29,34 +26,28 @@ public abstract class ConversionStep<TContext> : Step<TContext>, IStep<TContext>
     protected virtual bool ShowProgressAsDataSize => true;
 
     /// <inheritdoc/>
-    void IStep<TContext>.Prepare(TContext context)
+    IHasProgress<TContext> IStep<TContext>.Prepare(TContext context, IHasProgress<TContext>? insertAfter, int level)
     {
-        _inputs = [.. GetInputs(context)];
-        _outputs = [.. GetOutputs(context)];
+        insertAfter = context.Add(this, insertAfter, level);
 
-        context.AddStep(this);
-
-        context.CurrentLevel++;
-        foreach (ProgressInfo<TContext> progress in GetProgressInfos())
+        foreach (ProgressInfo<TContext> progress in progressInfos ?? [])
         {
             progress.Parent = this;
-            context.AddProgress(progress);
+            insertAfter = context.Add(progress, insertAfter, level + 1);
         }
-        context.CurrentLevel--;
+
+        return insertAfter;
     }
 
     /// <inheritdoc/>
     async Task IStep<TContext>.ExecuteAsync(TContext context, CancellationToken cancellationToken)
     {
-        Debug.Assert(_inputs is not null);
-        Debug.Assert(_outputs is not null);
-
-        foreach (IResource resource in _inputs.Concat(_outputs))
+        foreach (IResource resource in inputs.Concat(outputs))
         {
-            await resource.DetermineAvailabilityAsync(cancellationToken);
+            await resource.DetermineAvailabilityAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        foreach (IResource missing in _inputs.Where(input => input.IsRequired && !input.IsAvailable))
+        foreach (IResource missing in inputs.Where(input => input.IsRequired && !input.IsAvailable))
         {
             context.Fail(this, $"Required input {missing.Name} not available.");
         }
@@ -65,18 +56,18 @@ public abstract class ConversionStep<TContext> : Step<TContext>, IStep<TContext>
 
         StepExecution execution;
 
-        if (_outputs.Any(output => !output.IsAvailable))
+        if (outputs.Any(output => !output.IsAvailable))
         {
             execution = StepExecution.Necessary;
         }
-        else if (_inputs.Any(input => !input.IsAvailable))
+        else if (inputs.Any(input => !input.IsAvailable))
         {
             execution = StepExecution.Redundant;
         }
         else
         {
-            DateTimeOffset newestInput = _inputs.Length != 0 ? _inputs.Min(input => input.LastUpdated ?? DateTimeOffset.MaxValue) : DateTimeOffset.MinValue;
-            DateTimeOffset oldesOutput = _outputs.Length != 0 ? _outputs.Max(output => output.LastUpdated ?? DateTimeOffset.MinValue) : DateTimeOffset.MinValue;
+            DateTimeOffset newestInput = inputs.Length != 0 ? inputs.Min(input => input.LastUpdated ?? DateTimeOffset.MaxValue) : DateTimeOffset.MinValue;
+            DateTimeOffset oldesOutput = outputs.Length != 0 ? outputs.Max(output => output.LastUpdated ?? DateTimeOffset.MinValue) : DateTimeOffset.MinValue;
 
             execution = oldesOutput <= newestInput ? StepExecution.Recommended : StepExecution.Redundant;
         }
@@ -90,42 +81,24 @@ public abstract class ConversionStep<TContext> : Step<TContext>, IStep<TContext>
         else
         {
             State = ProgressState.Running;
-            await ExecuteAsync(context, DateTime.UtcNow, cancellationToken);
+            await ExecuteAsync(context, DateTime.UtcNow, cancellationToken).ConfigureAwait(false);
             State = ProgressState.Done;
         }
 
         //context.SetComplete(this);
 
-        foreach (IResource resource in _outputs)
+        foreach (IResource resource in outputs)
         {
-            await resource.DetermineAvailabilityAsync(cancellationToken);
+            await resource.DetermineAvailabilityAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        foreach (IResource missing in _outputs.Where(output => !output.IsAvailable))
+        foreach (IResource missing in outputs.Where(output => !output.IsAvailable))
         {
             context.Fail(this, $"Output {missing.Name} not created.");
         }
 
         context.EnsureValid();
     }
-
-    /// <summary>
-    /// Gets the input resources for this step.
-    /// </summary>
-    /// <returns>An enumerable of input resources.</returns>
-    protected virtual IEnumerable<IResource> GetInputs(TContext context) => [];
-
-    /// <summary>
-    /// Gets the output resources for this step.
-    /// </summary>
-    /// <returns>An enumerable of output resources.</returns>
-    protected virtual IEnumerable<IResource> GetOutputs(TContext context) => [];
-
-    /// <summary>
-    /// Gets the progress information items for this step.
-    /// </summary>
-    /// <returns>An enumerable of progress information items.</returns>
-    protected virtual IEnumerable<ProgressInfo<TContext>> GetProgressInfos() => [];
 
     /// <summary>
     /// Executes the conversion step asynchronously.

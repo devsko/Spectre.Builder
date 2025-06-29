@@ -8,10 +8,11 @@ namespace Spectre.Builder;
 /// </summary>
 public class ProgressInfo<TContext>(string name) : IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
 {
-    /// <summary>
-    /// Gets or sets the parent step associated with this progress information.
-    /// </summary>
+    /// <inheritdoc/>
     public IHasProgress<TContext>? Parent { get; set; }
+
+    /// <inheritdoc/>
+    IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => this;
 
     /// <summary>
     /// Gets the name of the progress information.

@@ -54,7 +54,7 @@ public sealed class ProgressStream(Stream baseStream, IProgress<int> progress) :
     /// <inheritdoc/>
     public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        int bytesRead = await baseStream.ReadAsync(buffer, cancellationToken);
+        int bytesRead = await baseStream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
         progress.Report(bytesRead);
 
         return bytesRead;
@@ -72,7 +72,7 @@ public sealed class ProgressStream(Stream baseStream, IProgress<int> progress) :
     /// <inheritdoc/>
     public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        await baseStream.WriteAsync(buffer, cancellationToken);
+        await baseStream.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
         progress.Report(buffer.Length);
     }
 

@@ -10,9 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AdditionalFiles Remove="D:\repos\devsko\Spectre.Builder\stylecop.json" />
+    <Using Include="Xunit"/>
   </ItemGroup>
-
+  
   <ItemGroup>
     <ProjectReference Include="..\..\src\Spectre.Builder\Spectre.Builder.csproj" />
   </ItemGroup>

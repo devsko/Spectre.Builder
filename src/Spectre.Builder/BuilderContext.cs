@@ -15,9 +15,8 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     private readonly Dictionary<int, (IHasProgress<TContext>, int)> _progressById = [];
     private readonly Dictionary<IHasProgress<TContext>, ProgressTask> _consoleTasks = [];
     private readonly List<(IStep<TContext>, string)> _errors = [];
-    private readonly Dictionary<string, IResource> _resources = [];
     private readonly CancellationToken _cancellationToken;
-    private int _currentLevel;
+    private ProgressContext? _spectreContext;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BuilderContext{TContext}"/> class
@@ -38,22 +37,30 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     }
 
     /// <inheritdoc/>
-    int IBuilderContext<TContext>.CurrentLevel
+    public IHasProgress<TContext> Add(IHasProgress<TContext> progress, IHasProgress<TContext>? insertAfter, int level)
     {
-        get => _currentLevel;
-        set => _currentLevel = value;
+        ArgumentNullException.ThrowIfNull(progress);
+        if (_spectreContext is null)
+        {
+            throw new InvalidOperationException("Cannot add progress before running the context.");
+        }
+
+        _progresses.Add((progress, level));
+        ProgressTask task = insertAfter is null
+            ? _spectreContext.AddTask("not used", autoStart: false, maxValue: double.PositiveInfinity)
+            : _spectreContext.AddTaskAfter("not used", _consoleTasks[insertAfter], autoStart: false, maxValue: double.PositiveInfinity);
+        _progressById.Add(task.Id, (progress, level));
+        _consoleTasks.Add(progress, task);
+
+        return progress;
     }
 
     /// <inheritdoc/>
-    public void AddStep(IStep<TContext> step)
+    public int GetLevel(IHasProgress<TContext> progress)
     {
-        _progresses.Add((step, _currentLevel));
-    }
-
-    /// <inheritdoc/>
-    public void AddProgress(ProgressInfo<TContext> progress)
-    {
-        _progresses.Add((progress, _currentLevel));
+        return _consoleTasks.TryGetValue(progress, out ProgressTask? task)
+            ? _progressById[task.Id].Item2
+            : throw new KeyNotFoundException("Progress not found in the context.");
     }
 
     /// <inheritdoc/>
@@ -61,32 +68,6 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     {
         return _progressById[id];
     }
-
-    /// <summary>
-    /// Adds a resource to the context with the specified key.
-    /// </summary>
-    /// <param name="key">The key for the resource.</param>
-    /// <param name="resource">The resource to add.</param>
-    /// <returns>The added resource.</returns>
-    public T AddResource<T>(string key, T resource) where T : IResource
-    {
-        _resources.Add(key, resource);
-        return resource;
-    }
-
-    /// <summary>
-    /// Gets a file resource by key.
-    /// </summary>
-    /// <param name="key">The key of the file resource.</param>
-    /// <returns>The <see cref="FileResource"/> associated with the key.</returns>
-    public FileResource GetFileResource(string key) => (FileResource)_resources[key];
-
-    /// <summary>
-    /// Gets a directory resource by key.
-    /// </summary>
-    /// <param name="key">The key of the directory resource.</param>
-    /// <returns>The <see cref="DirectoryResource"/> associated with the key.</returns>
-    public DirectoryResource GetDirectoryResource(string key) => (DirectoryResource)_resources[key];
 
     /// <inheritdoc/>
     public void SetTotal(IHasProgress<TContext> progress, long total)
@@ -129,15 +110,6 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
 
         TContext context = Unsafe.As<TContext>(this);
 
-        step.Prepare(context);
-
-        AddProgress(new EmptyInfo<TContext> { Parent = step });
-        foreach (StatusInfo<TContext> statusInfo in status)
-        {
-            statusInfo.Parent = step;
-            AddProgress(statusInfo);
-        }
-
         await AnsiConsole
             .Progress()
             .Columns([
@@ -147,14 +119,15 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
                 new ElapsedColumn(context)])
             .StartAsync(async ctx =>
             {
-                foreach ((IHasProgress<TContext> progress, int level) in _progresses)
+                _spectreContext = ctx;
+
+                IHasProgress<TContext> insertAfter = step.Prepare(context, null, 0);
+
+                Add(new EmptyInfo<TContext> { Parent = step }, insertAfter, 0);
+                foreach (StatusInfo<TContext> statusInfo in status)
                 {
-                    if (progress.ShouldShowProgress)
-                    {
-                        ProgressTask task = ctx.AddTask("not used", autoStart: false, maxValue: double.PositiveInfinity);
-                        _progressById.Add(task.Id, (progress, level));
-                        _consoleTasks.Add(progress, task);
-                    }
+                    statusInfo.Parent = step;
+                    insertAfter = Add(statusInfo, insertAfter, 0);
                 }
 
                 Task setStatus = Task.Run(async () =>
@@ -165,15 +138,17 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
                         {
                             SetProgress(status, status.GetValue());
                         }
-                        await Task.Delay(TimeSpan.FromSeconds(1));
+                        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
                     }
                 });
 
-                await ExecuteAsync(step, _cancellationToken);
-                await setStatus;
+                await ExecuteAsync(step, _cancellationToken).ConfigureAwait(false);
+                await setStatus.ConfigureAwait(false);
 
                 ctx.Refresh();
-            });
+
+                _spectreContext = null;
+            }).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -186,7 +161,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
             task.StartTask();
         }
 
-        await step.ExecuteAsync(Unsafe.As<TContext>(this), cancellationToken);
+        await step.ExecuteAsync(Unsafe.As<TContext>(this), cancellationToken).ConfigureAwait(false);
 
         if (_consoleTasks.TryGetValue(step, out task))
         {

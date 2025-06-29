@@ -7,16 +7,14 @@ namespace Spectre.Builder;
 /// Represents a step that executes a sequence of child steps in order.
 /// </summary>
 /// <param name="steps">The steps to execute sequentially.</param>
-/// <param name="progresses">Optional progress information for the step.</param>
-public abstract class SequentialStep<TContext>(IEnumerable<IStep<TContext>> steps, IEnumerable<ProgressInfo<TContext>>? progresses = null) : CompoundStep<TContext>(steps, progresses), IStep<TContext> where TContext : class, IBuilderContext<TContext>
+public abstract class SequentialStep<TContext>(IEnumerable<IStep<TContext>> steps) : CompoundStep<TContext>(steps), IStep<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <inheritdoc/>
     protected override async Task ExecuteStepsAsync(TContext context, CancellationToken cancellationToken)
     {
-        foreach (IStep<TContext> step in Steps)
+        await foreach (IStep<TContext> step in StepsToExecute.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
         {
-            await context.ExecuteAsync(step, cancellationToken);
-            context.IncrementProgress(this);
+            await ExecuteStepAsync(step, context, cancellationToken).ConfigureAwait(false);
         }
     }
 }

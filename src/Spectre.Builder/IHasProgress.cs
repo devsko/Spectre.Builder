@@ -27,4 +27,9 @@ public interface IHasProgress<TContext> where TContext : class, IBuilderContext<
     /// Gets the current state of the progress.
     /// </summary>
     ProgressState State { get; }
+
+    /// <summary>
+    /// Gets the last progress item in the hierarchy, including itself or its children.
+    /// </summary>
+    IHasProgress<TContext> SelfOrLastChild { get; }
 }

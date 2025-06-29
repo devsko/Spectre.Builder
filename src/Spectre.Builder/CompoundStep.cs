@@ -1,55 +1,99 @@
 ﻿// Copyright (c) devsko. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Threading.Channels;
+
 namespace Spectre.Builder;
 
 /// <summary>
 /// Represents a step that contains multiple sub-steps and progress information.
 /// </summary>
-public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps, IEnumerable<ProgressInfo<TContext>>? progresses) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
+public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
 {
-    /// <summary>
-    /// Gets the list of sub-steps contained in this compound step.
-    /// </summary>
-    protected List<IStep<TContext>> Steps { get; } = [.. steps];
+    private readonly List<IStep<TContext>> _steps = [.. steps];
+    private bool _allStepsSkipped;
 
     /// <summary>
-    /// Gets the list of progress information items associated with this compound step.
+    /// Gets the channel used to manage the execution of sub-steps.
     /// </summary>
-    protected List<ProgressInfo<TContext>> Progresses { get; } = [.. progresses ?? []];
+    protected Channel<IStep<TContext>> StepsToExecute { get; } = Channel.CreateUnbounded<IStep<TContext>>();
+
+    IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => _steps.LastOrDefault()?.SelfOrLastChild ?? this;
 
     /// <summary>
     /// Gets the type of progress for this step.
     /// </summary>
     public virtual ProgressType Type => ProgressType.NumericStep;
 
-    /// <inheritdoc/>
-    void IStep<TContext>.Prepare(TContext context)
+    /// <summary>
+    /// Adds a sub-step to the compound step and updates the context with the total number of steps.
+    /// </summary>
+    /// <param name="step">The sub-step to add.</param>
+    /// <param name="context">The context in which the step is being executed.</param>
+    protected void Add(IStep<TContext> step, TContext context)
     {
-        context.AddStep(this);
+        lock (_steps)
+            _steps.Add(step);
 
-        context.CurrentLevel++;
-        foreach (IStep<TContext> step in Steps)
+        step.Prepare(context, ((IHasProgress<TContext>?)this)?.SelfOrLastChild, context.GetLevel(this) + 1);
+
+        StepsToExecute.Writer.TryWrite(step);
+
+        context.SetTotal(this, _steps.Count);
+    }
+
+    /// <summary>
+    /// Executes the compound step asynchronously. This method optionally allows creating additional steps or performing other operations.
+    /// </summary>
+    /// <param name="context">The context in which the step is being executed.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    protected virtual Task ExecuteAsync(TContext context, CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Executes a single sub-step asynchronously.
+    /// </summary>
+    /// <param name="step">The sub-step to execute.</param>
+    /// <param name="context">The context in which the step is being executed.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    protected async ValueTask ExecuteStepAsync(IStep<TContext> step, TContext context, CancellationToken cancellationToken)
+    {
+        await context.ExecuteAsync(step, cancellationToken).ConfigureAwait(false);
+        context.IncrementProgress(this);
+        _allStepsSkipped &= step.State is ProgressState.Skip;
+    }
+
+    /// <inheritdoc/>
+    IHasProgress<TContext> IStep<TContext>.Prepare(TContext context, IHasProgress<TContext>? insertAfter, int level)
+    {
+        insertAfter = context.Add(this, insertAfter, level);
+
+        foreach (IStep<TContext> step in _steps)
         {
-            step.Prepare(context);
+            insertAfter = step.Prepare(context, insertAfter, level + 1);
+            StepsToExecute.Writer.TryWrite(step);
         }
-        foreach (ProgressInfo<TContext> progress in Progresses)
-        {
-            progress.Parent = this;
-            context.AddProgress(progress);
-        }
-        context.CurrentLevel--;
+
+        return insertAfter;
     }
 
     /// <inheritdoc/>
     async Task IStep<TContext>.ExecuteAsync(TContext context, CancellationToken cancellationToken)
     {
         State = ProgressState.Running;
-        context.SetTotal(this, Steps.Count);
+        context.SetTotal(this, _steps.Count);
 
-        await ExecuteStepsAsync(context, cancellationToken);
+        Task executeSteps = ExecuteStepsAsync(context, cancellationToken);
 
-        State = Steps.All(step => step.State == ProgressState.Skip) ? ProgressState.Skip : ProgressState.Done;
+        await ExecuteAsync(context, cancellationToken).ConfigureAwait(false);
+
+        await executeSteps.ConfigureAwait(false);
+
+        State = _allStepsSkipped ? ProgressState.Skip : ProgressState.Done;
         //context.SetComplete(this);
     }
 
