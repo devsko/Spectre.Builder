@@ -23,5 +23,5 @@ public class ProgressInfo<TContext>(string name) : IHasProgress<TContext> where 
     ProgressType IHasProgress<TContext>.Type => ProgressType.ValueRaw;
 
     /// <inheritdoc/>
-    ProgressState IHasProgress<TContext>.State => 0;
+    ProgressState IHasProgress<TContext>.State => ProgressState.Running;
 }
