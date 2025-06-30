@@ -11,7 +11,7 @@ namespace Spectre.Builder;
 public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps, Func<CompoundStep<TContext>, TContext, CancellationToken, Task>? createStepsAsync) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
 {
     private readonly List<IStep<TContext>> _steps = [.. steps.Where(step => !step.IsHidden)];
-    private bool _allStepsSkipped;
+    private bool _allStepsSkipped = true;
 
     /// <summary>
     /// Gets the channel used to manage the execution of sub-steps.
