@@ -74,7 +74,7 @@ public class DownloadableResource(Uri uri) : IResource
     /// <returns>A task that represents the asynchronous download operation. The value of the TResult parameter contains the stream of the downloaded resource.</returns>
     public async Task<Stream> DownloadAsync(Action<int>? progress = null, CancellationToken cancellationToken = default)
     {
-        HttpResponseMessage response = await _client.GetAsync(Uri, cancellationToken).ConfigureAwait(false);
+        HttpResponseMessage response = await _client.GetAsync(Uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
         Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         if (progress is not null)
         {
