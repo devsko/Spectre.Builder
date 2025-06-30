@@ -55,7 +55,7 @@ public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps,
     protected async ValueTask ExecuteStepAsync(IStep<TContext> step, TContext context, CancellationToken cancellationToken)
     {
         await context.ExecuteAsync(step, cancellationToken).ConfigureAwait(false);
-        _allStepsSkipped &= step.State is ProgressState.Skip;
+        _allStepsSkipped &= step.IsHidden || step.State is ProgressState.Skip;
         if (!step.IsHidden)
         {
             context.IncrementProgress(this);
