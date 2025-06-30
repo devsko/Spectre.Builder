@@ -8,12 +8,12 @@ namespace Spectre.Builder;
 /// </summary>
 public abstract class Step<TContext> : IStep<TContext> where TContext : class, IBuilderContext<TContext>
 {
-    private sealed class SequentialStepImpl(string name, IEnumerable<IStep<TContext>> steps, Func<TContext, CancellationToken, Task>? createStepsAsync) : SequentialStep<TContext>(steps, createStepsAsync)
+    private sealed class SequentialStepImpl(string name, IEnumerable<IStep<TContext>> steps, Func<CompoundStep<TContext>, TContext, CancellationToken, Task>? createStepsAsync) : SequentialStep<TContext>(steps, createStepsAsync)
     {
         public override string Name => name;
     }
 
-    private sealed class ParallelStepImpl(string name, IEnumerable<IStep<TContext>> steps, Func<TContext, CancellationToken, Task>? createStepsAsync, ParallelOptions options) : ParallelStep<TContext>(steps, createStepsAsync)
+    private sealed class ParallelStepImpl(string name, IEnumerable<IStep<TContext>> steps, Func<CompoundStep<TContext>, TContext, CancellationToken, Task>? createStepsAsync, ParallelOptions options) : ParallelStep<TContext>(steps, createStepsAsync)
     {
         public override string Name => name;
 
@@ -27,7 +27,7 @@ public abstract class Step<TContext> : IStep<TContext> where TContext : class, I
     /// <param name="steps">The steps to execute sequentially.</param>
     /// <param name="createStepsAsync">An optional function to create steps asynchronously.</param>
     /// <returns>A new <see cref="SequentialStep{TContext}"/> instance.</returns>
-    public static SequentialStep<TContext> Sequential(string name, IEnumerable<IStep<TContext>> steps, Func<TContext, CancellationToken, Task>? createStepsAsync = null) => new SequentialStepImpl(name, steps, createStepsAsync);
+    public static SequentialStep<TContext> Sequential(string name, IEnumerable<IStep<TContext>> steps, Func<CompoundStep<TContext>, TContext, CancellationToken, Task>? createStepsAsync = null) => new SequentialStepImpl(name, steps, createStepsAsync);
 
     /// <summary>
     /// Creates a parallel step with the specified name, steps, and options.
@@ -37,7 +37,7 @@ public abstract class Step<TContext> : IStep<TContext> where TContext : class, I
     /// <param name="createStepsAsync">An optional function to create steps asynchronously.</param>
     /// <param name="options">The parallel options to use. If null, default options are used.</param>
     /// <returns>A new <see cref="ParallelStep{TContext}"/> instance.</returns>
-    public static ParallelStep<TContext> Parallel(string name, IEnumerable<IStep<TContext>> steps, Func<TContext, CancellationToken, Task>? createStepsAsync = null, ParallelOptions? options = null) => new ParallelStepImpl(name, steps, createStepsAsync, options ?? new ParallelOptions());
+    public static ParallelStep<TContext> Parallel(string name, IEnumerable<IStep<TContext>> steps, Func<CompoundStep<TContext>, TContext, CancellationToken, Task>? createStepsAsync = null, ParallelOptions? options = null) => new ParallelStepImpl(name, steps, createStepsAsync, options ?? new ParallelOptions());
 
     /// <inheritdoc/>
     bool IHasProgress<TContext>.IsHidden => false;

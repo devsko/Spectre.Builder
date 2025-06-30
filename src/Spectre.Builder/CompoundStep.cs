@@ -8,7 +8,7 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents a step that contains multiple sub-steps and progress information.
 /// </summary>
-public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps, Func<TContext, CancellationToken, Task>? createStepsAsync) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
+public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps, Func<CompoundStep<TContext>, TContext, CancellationToken, Task>? createStepsAsync) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
 {
     private readonly List<IStep<TContext>> _steps = [.. steps];
     private bool _allStepsSkipped;
@@ -30,7 +30,7 @@ public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps,
     /// </summary>
     /// <param name="step">The sub-step to add.</param>
     /// <param name="context">The context in which the step is being executed.</param>
-    protected void Add(IStep<TContext> step, TContext context)
+    public void Add(IStep<TContext> step, TContext context)
     {
         lock (_steps)
             _steps.Add(step);
@@ -80,7 +80,7 @@ public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps,
 
         if (createStepsAsync is not null)
         {
-            await createStepsAsync(context, cancellationToken).ConfigureAwait(false);
+            await createStepsAsync(this, context, cancellationToken).ConfigureAwait(false);
         }
 
         await executeSteps.ConfigureAwait(false);

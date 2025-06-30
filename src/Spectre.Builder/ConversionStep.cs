@@ -59,23 +59,7 @@ public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] o
 
         context.EnsureValid();
 
-        StepExecution execution;
-
-        if (outputs.Any(output => !output.IsAvailable))
-        {
-            execution = StepExecution.Necessary;
-        }
-        else if (inputs.Any(input => !input.IsAvailable))
-        {
-            execution = StepExecution.Redundant;
-        }
-        else
-        {
-            DateTimeOffset newestInput = inputs.Length != 0 ? inputs.Min(input => input.LastUpdated ?? DateTimeOffset.MaxValue) : DateTimeOffset.MinValue;
-            DateTimeOffset oldesOutput = outputs.Length != 0 ? outputs.Max(output => output.LastUpdated ?? DateTimeOffset.MinValue) : DateTimeOffset.MinValue;
-
-            execution = oldesOutput <= newestInput ? StepExecution.Recommended : StepExecution.Redundant;
-        }
+        StepExecution execution = GetStepExecution();
 
         // Ask context
 
@@ -103,6 +87,35 @@ public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] o
         }
 
         context.EnsureValid();
+    }
+
+    /// <summary>
+    /// Determines the execution state of the step based on the availability and timestamps of inputs and outputs.
+    /// </summary>
+    /// <returns>
+    /// A <see cref="StepExecution"/> value indicating whether the step is redundant, recommended, or necessary.
+    /// </returns>
+    public StepExecution GetStepExecution()
+    {
+        StepExecution execution;
+
+        if (outputs.Any(output => !output.IsAvailable))
+        {
+            execution = StepExecution.Necessary;
+        }
+        else if (inputs.Any(input => !input.IsAvailable))
+        {
+            execution = StepExecution.Redundant;
+        }
+        else
+        {
+            DateTimeOffset newestInput = inputs.Length != 0 ? inputs.Min(input => input.LastUpdated ?? DateTimeOffset.MaxValue) : DateTimeOffset.MinValue;
+            DateTimeOffset oldesOutput = outputs.Length != 0 ? outputs.Max(output => output.LastUpdated ?? DateTimeOffset.MinValue) : DateTimeOffset.MinValue;
+
+            execution = oldesOutput <= newestInput ? StepExecution.Recommended : StepExecution.Redundant;
+        }
+
+        return execution;
     }
 
     /// <summary>
