@@ -125,10 +125,10 @@ public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] o
     /// <param name="context">The context in which the progress is being added.</param>
     protected void Add(ProgressInfo<TContext> progress, TContext context)
     {
+        context.Add(progress, ((IHasProgress<TContext>)this).SelfOrLastChild, context.GetLevel(this) + 1);
+
         lock (ProgressInfos)
             ProgressInfos.Add(progress);
-
-        context.Add(progress, ((IHasProgress<TContext>)this).SelfOrLastChild, context.GetLevel(this) + 1);
     }
 
     /// <summary>

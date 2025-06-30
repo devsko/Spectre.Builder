@@ -10,7 +10,7 @@ namespace Spectre.Builder;
 /// </summary>
 public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps, Func<CompoundStep<TContext>, TContext, CancellationToken, Task>? createStepsAsync) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
 {
-    private readonly List<IStep<TContext>> _steps = [.. steps];
+    private readonly List<IStep<TContext>> _steps = [.. steps.Where(step => !step.IsHidden)];
     private bool _allStepsSkipped;
 
     /// <summary>
@@ -32,10 +32,13 @@ public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps,
     /// <param name="context">The context in which the step is being executed.</param>
     public void Add(IStep<TContext> step, TContext context)
     {
-        lock (_steps)
-            _steps.Add(step);
-
         step.Prepare(context, ((IHasProgress<TContext>?)this)?.SelfOrLastChild, context.GetLevel(this) + 1);
+
+        if (!step.IsHidden)
+        {
+            lock (_steps)
+                _steps.Add(step);
+        }
 
         StepsToExecute.Writer.TryWrite(step);
 
@@ -61,7 +64,7 @@ public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps,
     {
         insertAfter = context.Add(this, insertAfter, level);
 
-        foreach (IStep<TContext> step in _steps)
+        foreach (IStep<TContext> step in steps)
         {
             insertAfter = step.Prepare(context, insertAfter, level + 1);
             StepsToExecute.Writer.TryWrite(step);

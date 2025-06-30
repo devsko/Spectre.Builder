@@ -11,6 +11,7 @@ namespace Spectre.Builder;
 /// </summary>
 public partial class BuilderContext<TContext> : IBuilderContext<TContext> where TContext : class, IBuilderContext<TContext>
 {
+    private readonly object _lock = new();
     private readonly Dictionary<int, (IHasProgress<TContext>, int)> _progressById = [];
     private readonly Dictionary<IHasProgress<TContext>, ProgressTask> _consoleTasks = [];
     private readonly List<(IStep<TContext>, string)> _errors = [];
@@ -49,52 +50,57 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
             ProgressTask task = insertAfter is null
                 ? _spectreContext.AddTask("not used", autoStart: false, maxValue: double.PositiveInfinity)
                 : _spectreContext.AddTaskAfter("not used", _consoleTasks[insertAfter], autoStart: false, maxValue: double.PositiveInfinity);
-            _progressById.Add(task.Id, (progress, level));
-            _consoleTasks.Add(progress, task);
+            lock (_lock)
+            {
+                _progressById.Add(task.Id, (progress, level));
+                _consoleTasks.Add(progress, task);
+            }
         }
 
         return progress;
     }
 
+    private ProgressTask GetTask(IHasProgress<TContext> progress)
+    {
+        lock (_lock)
+        {
+            return _consoleTasks.TryGetValue(progress, out ProgressTask? task)
+                ? task
+                : throw new KeyNotFoundException("Progress not found in the context.");
+        }
+    }
+
     /// <inheritdoc/>
     public int GetLevel(IHasProgress<TContext> progress)
     {
-        return _consoleTasks.TryGetValue(progress, out ProgressTask? task)
-            ? _progressById[task.Id].Item2
-            : throw new KeyNotFoundException("Progress not found in the context.");
+        return _progressById[GetTask(progress).Id].Item2;
     }
 
     /// <inheritdoc/>
     public (IHasProgress<TContext>, int) GetProgressAndLevel(int id)
     {
-        return _progressById[id];
+        lock (_lock)
+        {
+            return _progressById[id];
+        }
     }
 
     /// <inheritdoc/>
     public void SetTotal(IHasProgress<TContext> progress, long total)
     {
-        if (_consoleTasks.TryGetValue(progress, out ProgressTask? task))
-        {
-            task.MaxValue = total;
-        }
+        GetTask(progress).MaxValue = total;
     }
 
     /// <inheritdoc/>
     public void SetProgress(IHasProgress<TContext> progress, long value)
     {
-        if (_consoleTasks.TryGetValue(progress, out ProgressTask? task))
-        {
-            task.Value = value;
-        }
+        GetTask(progress).Value = value;
     }
 
     /// <inheritdoc/>
     public void IncrementProgress(IHasProgress<TContext> progress, long amount = 1)
     {
-        if (_consoleTasks.TryGetValue(progress, out ProgressTask? task))
-        {
-            task.Increment(amount);
-        }
+        GetTask(progress).Increment(amount);
     }
 
     /// <summary>
@@ -156,17 +162,11 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     {
         ArgumentNullException.ThrowIfNull(step);
 
-        if (_consoleTasks.TryGetValue(step, out ProgressTask? task))
-        {
-            task.StartTask();
-        }
+        GetTask(step).StartTask();
 
         await step.ExecuteAsync(Unsafe.As<TContext>(this), cancellationToken).ConfigureAwait(false);
 
-        if (_consoleTasks.TryGetValue(step, out task))
-        {
-            task.StopTask();
-        }
+        GetTask(step).StopTask();
 
         // Failed?
     }
@@ -174,7 +174,10 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     /// <inheritdoc/>
     public void Fail(IStep<TContext> step, string error)
     {
-        _errors.Add((step, error));
+        lock (_lock)
+        {
+            _errors.Add((step, error));
+        }
     }
 
     /// <inheritdoc/>
@@ -182,7 +185,10 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     {
         if (_errors.Count > 0)
         {
-            throw new InvalidOperationException(string.Join(Environment.NewLine, _errors.Select(e => e.Item2)));
+            lock (_lock)
+            {
+                throw new InvalidOperationException(string.Join(Environment.NewLine, _errors.Select(e => e.Item2)));
+            }
         }
     }
 }
