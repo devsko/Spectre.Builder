@@ -11,7 +11,6 @@ namespace Spectre.Builder;
 /// </summary>
 public partial class BuilderContext<TContext> : IBuilderContext<TContext> where TContext : class, IBuilderContext<TContext>
 {
-    private readonly List<(IHasProgress<TContext>, int)> _progresses = [];
     private readonly Dictionary<int, (IHasProgress<TContext>, int)> _progressById = [];
     private readonly Dictionary<IHasProgress<TContext>, ProgressTask> _consoleTasks = [];
     private readonly List<(IStep<TContext>, string)> _errors = [];
@@ -45,12 +44,14 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
             throw new InvalidOperationException("Cannot add progress before running the context.");
         }
 
-        _progresses.Add((progress, level));
-        ProgressTask task = insertAfter is null
-            ? _spectreContext.AddTask("not used", autoStart: false, maxValue: double.PositiveInfinity)
-            : _spectreContext.AddTaskAfter("not used", _consoleTasks[insertAfter], autoStart: false, maxValue: double.PositiveInfinity);
-        _progressById.Add(task.Id, (progress, level));
-        _consoleTasks.Add(progress, task);
+        if (!progress.IsHidden)
+        {
+            ProgressTask task = insertAfter is null
+                ? _spectreContext.AddTask("not used", autoStart: false, maxValue: double.PositiveInfinity)
+                : _spectreContext.AddTaskAfter("not used", _consoleTasks[insertAfter], autoStart: false, maxValue: double.PositiveInfinity);
+            _progressById.Add(task.Id, (progress, level));
+            _consoleTasks.Add(progress, task);
+        }
 
         return progress;
     }
@@ -123,10 +124,9 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
 
                 IHasProgress<TContext> insertAfter = step.Prepare(context, null, 0);
 
-                Add(new EmptyInfo<TContext> { Parent = step }, insertAfter, 0);
+                Add(new EmptyInfo<TContext>(), insertAfter, 0);
                 foreach (StatusInfo<TContext> statusInfo in status)
                 {
-                    statusInfo.Parent = step;
                     insertAfter = Add(statusInfo, insertAfter, 0);
                 }
 

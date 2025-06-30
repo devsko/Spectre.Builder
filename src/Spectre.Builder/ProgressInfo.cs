@@ -9,7 +9,7 @@ namespace Spectre.Builder;
 public class ProgressInfo<TContext>(string name) : IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <inheritdoc/>
-    public IHasProgress<TContext>? Parent { get; set; }
+    bool IHasProgress<TContext>.IsHidden => false;
 
     /// <inheritdoc/>
     IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => this;
@@ -20,11 +20,8 @@ public class ProgressInfo<TContext>(string name) : IHasProgress<TContext> where 
     public string GetName(TContext context) => name;
 
     /// <inheritdoc/>
-    bool IHasProgress<TContext>.ShouldShowProgress => Parent?.ShouldShowProgress ?? throw new InvalidOperationException();
-
-    /// <inheritdoc/>
     ProgressType IHasProgress<TContext>.Type => ProgressType.ValueRaw;
 
     /// <inheritdoc/>
-    ProgressState IHasProgress<TContext>.State => Parent?.State ?? throw new InvalidOperationException();
+    ProgressState IHasProgress<TContext>.State => 0;
 }

@@ -8,7 +8,7 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents a step that contains multiple sub-steps and progress information.
 /// </summary>
-public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
+public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps, Func<TContext, CancellationToken, Task>? createStepsAsync) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
 {
     private readonly List<IStep<TContext>> _steps = [.. steps];
     private bool _allStepsSkipped;
@@ -40,17 +40,6 @@ public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps)
         StepsToExecute.Writer.TryWrite(step);
 
         context.SetTotal(this, _steps.Count);
-    }
-
-    /// <summary>
-    /// Executes the compound step asynchronously. This method optionally allows creating additional steps or performing other operations.
-    /// </summary>
-    /// <param name="context">The context in which the step is being executed.</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    protected virtual Task ExecuteAsync(TContext context, CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -89,7 +78,10 @@ public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps)
 
         Task executeSteps = ExecuteStepsAsync(context, cancellationToken);
 
-        await ExecuteAsync(context, cancellationToken).ConfigureAwait(false);
+        if (createStepsAsync is not null)
+        {
+            await createStepsAsync(context, cancellationToken).ConfigureAwait(false);
+        }
 
         await executeSteps.ConfigureAwait(false);
 

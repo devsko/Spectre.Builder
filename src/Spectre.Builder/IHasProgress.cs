@@ -9,14 +9,14 @@ namespace Spectre.Builder;
 public interface IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <summary>
+    /// Gets a value indicating whether the progress item is hidden.
+    /// </summary>
+    bool IsHidden { get; }
+
+    /// <summary>
     /// Gets the name of the progress item.
     /// </summary>
     string GetName(TContext context);
-
-    /// <summary>
-    /// Gets a value indicating whether progress should be shown.
-    /// </summary>
-    bool ShouldShowProgress { get; }
 
     /// <summary>
     /// Gets the type of progress.

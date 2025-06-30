@@ -7,7 +7,8 @@ namespace Spectre.Builder;
 /// Represents a step that executes a sequence of child steps in order.
 /// </summary>
 /// <param name="steps">The steps to execute sequentially.</param>
-public abstract class SequentialStep<TContext>(IEnumerable<IStep<TContext>> steps) : CompoundStep<TContext>(steps), IStep<TContext> where TContext : class, IBuilderContext<TContext>
+/// <param name="createStepsAsync">An optional function to create steps asynchronously.</param>
+public abstract class SequentialStep<TContext>(IEnumerable<IStep<TContext>> steps, Func<TContext, CancellationToken, Task>? createStepsAsync) : CompoundStep<TContext>(steps, createStepsAsync), IStep<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <inheritdoc/>
     protected override async Task ExecuteStepsAsync(TContext context, CancellationToken cancellationToken)

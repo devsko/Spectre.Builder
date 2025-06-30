@@ -15,6 +15,9 @@ public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] o
     /// </summary>
     private List<ProgressInfo<TContext>> ProgressInfos => _progressInfos ??= [];
 
+    /// <inheritdoc/>
+    public bool IsHidden { get; set; }
+
     IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => ((IHasProgress<TContext>?)_progressInfos?.LastOrDefault())?.SelfOrLastChild ?? this;
 
     /// <summary>
@@ -109,8 +112,9 @@ public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] o
     /// <param name="context">The context in which the progress is being added.</param>
     protected void Add(ProgressInfo<TContext> progress, TContext context)
     {
-        ProgressInfos.Add(progress);
-        progress.Parent = this;
+        lock (ProgressInfos)
+            ProgressInfos.Add(progress);
+
         context.Add(progress, ((IHasProgress<TContext>)this).SelfOrLastChild, context.GetLevel(this) + 1);
     }
 
