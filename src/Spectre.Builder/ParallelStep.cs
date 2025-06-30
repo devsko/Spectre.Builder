@@ -17,7 +17,7 @@ public abstract class ParallelStep<TContext>(IEnumerable<IStep<TContext>> steps,
     protected override Task ExecuteStepsAsync(TContext context, CancellationToken cancellationToken)
     {
         ParallelOptions.CancellationToken = cancellationToken;
-        return System.Threading.Tasks.Parallel.ForAsync(0, ParallelOptions.MaxDegreeOfParallelism - 1, ParallelOptions, ExecuteAsync);
+        return System.Threading.Tasks.Parallel.ForAsync(0, (ParallelOptions.TaskScheduler ?? TaskScheduler.Current).MaximumConcurrencyLevel - 1, ParallelOptions, ExecuteAsync);
 
         async ValueTask ExecuteAsync(int _, CancellationToken cancellationToken)
         {
