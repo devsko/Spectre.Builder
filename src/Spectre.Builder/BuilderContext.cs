@@ -128,12 +128,12 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
             {
                 _spectreContext = ctx;
 
-                IHasProgress<TContext> insertAfter = step.Prepare(context, null, 0);
+                step.Prepare(context, null, 0);
 
-                Add(new EmptyInfo<TContext>(), insertAfter, 0);
+                Add(new EmptyInfo<TContext>(), null, 0);
                 foreach (StatusInfo<TContext> statusInfo in status)
                 {
-                    insertAfter = Add(statusInfo, insertAfter, 0);
+                    Add(statusInfo, null, 0);
                 }
 
                 Task setStatus = Task.Run(async () =>

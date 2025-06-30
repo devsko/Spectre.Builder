@@ -86,6 +86,8 @@ public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps,
             await createStepsAsync(this, context, cancellationToken).ConfigureAwait(false);
         }
 
+        StepsToExecute.Writer.Complete();
+
         await executeSteps.ConfigureAwait(false);
 
         State = _allStepsSkipped ? ProgressState.Skip : ProgressState.Done;
