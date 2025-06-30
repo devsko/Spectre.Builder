@@ -60,20 +60,18 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
         return progress;
     }
 
-    private ProgressTask GetTask(IHasProgress<TContext> progress)
+    private ProgressTask? GetTask(IHasProgress<TContext> progress)
     {
         lock (_lock)
         {
-            return _consoleTasks.TryGetValue(progress, out ProgressTask? task)
-                ? task
-                : throw new KeyNotFoundException("Progress not found in the context.");
+            return _consoleTasks.TryGetValue(progress, out ProgressTask? task) ? task : null;
         }
     }
 
     /// <inheritdoc/>
     public int GetLevel(IHasProgress<TContext> progress)
     {
-        return _progressById[GetTask(progress).Id].Item2;
+        return _progressById[(GetTask(progress) ?? throw new KeyNotFoundException()).Id].Item2;
     }
 
     /// <inheritdoc/>
@@ -88,19 +86,19 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     /// <inheritdoc/>
     public void SetTotal(IHasProgress<TContext> progress, long total)
     {
-        GetTask(progress).MaxValue = total;
+        (GetTask(progress) ?? throw new KeyNotFoundException()).MaxValue = total;
     }
 
     /// <inheritdoc/>
     public void SetProgress(IHasProgress<TContext> progress, long value)
     {
-        GetTask(progress).Value = value;
+        (GetTask(progress) ?? throw new KeyNotFoundException()).Value = value;
     }
 
     /// <inheritdoc/>
     public void IncrementProgress(IHasProgress<TContext> progress, long amount = 1)
     {
-        GetTask(progress).Increment(amount);
+        (GetTask(progress) ?? throw new KeyNotFoundException()).Increment(amount);
     }
 
     /// <summary>
@@ -162,11 +160,11 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     {
         ArgumentNullException.ThrowIfNull(step);
 
-        GetTask(step).StartTask();
+        GetTask(step)?.StartTask();
 
         await step.ExecuteAsync(Unsafe.As<TContext>(this), cancellationToken).ConfigureAwait(false);
 
-        GetTask(step).StopTask();
+        GetTask(step)?.StopTask();
 
         // Failed?
     }
