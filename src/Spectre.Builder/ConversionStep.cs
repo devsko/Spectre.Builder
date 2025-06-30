@@ -6,9 +6,16 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents an abstract step that performs a conversion operation with progress tracking.
 /// </summary>
-public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] outputs, ProgressInfo<TContext>[]? progressInfos = null) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
+public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] outputs) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
 {
-    IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => ((IHasProgress<TContext>?)progressInfos?.LastOrDefault())?.SelfOrLastChild ?? this;
+    private List<ProgressInfo<TContext>>? _progressInfos;
+
+    /// <summary>
+    /// Gets the progress information list for this step.
+    /// </summary>
+    private List<ProgressInfo<TContext>> ProgressInfos => _progressInfos ??= [];
+
+    IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => ((IHasProgress<TContext>?)_progressInfos?.LastOrDefault())?.SelfOrLastChild ?? this;
 
     /// <summary>
     /// Gets the type of progress information to display for this step.
@@ -28,15 +35,10 @@ public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] o
     /// <inheritdoc/>
     IHasProgress<TContext> IStep<TContext>.Prepare(TContext context, IHasProgress<TContext>? insertAfter, int level)
     {
-        insertAfter = context.Add(this, insertAfter, level);
+        context.Add(this, insertAfter, level);
+        OnPrepared(context);
 
-        foreach (ProgressInfo<TContext> progress in progressInfos ?? [])
-        {
-            progress.Parent = this;
-            insertAfter = context.Add(progress, insertAfter, level + 1);
-        }
-
-        return insertAfter;
+        return ((IHasProgress<TContext>)this).SelfOrLastChild;
     }
 
     /// <inheritdoc/>
@@ -99,6 +101,25 @@ public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] o
 
         context.EnsureValid();
     }
+
+    /// <summary>
+    /// Adds a progress information object to the step.
+    /// </summary>
+    /// <param name="progress">The progress information to add.</param>
+    /// <param name="context">The context in which the progress is being added.</param>
+    protected void Add(ProgressInfo<TContext> progress, TContext context)
+    {
+        ProgressInfos.Add(progress);
+        progress.Parent = this;
+        context.Add(progress, ((IHasProgress<TContext>)this).SelfOrLastChild, context.GetLevel(this) + 1);
+    }
+
+    /// <summary>
+    /// Called when the step is prepared.
+    /// </summary>
+    /// <param name="context">The context in which the step is being prepared.</param>
+    protected virtual void OnPrepared(TContext context)
+    { }
 
     /// <summary>
     /// Executes the conversion step asynchronously.
