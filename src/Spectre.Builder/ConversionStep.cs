@@ -6,7 +6,7 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents an abstract step that performs a conversion operation with progress tracking.
 /// </summary>
-public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] outputs, bool isHidden = false) : Step<TContext>, IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
+public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] outputs) : Step<TContext>, IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
 {
     private List<ProgressInfo<TContext>>? _progressInfos;
 
@@ -14,9 +14,6 @@ public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] o
     /// Gets the progress information list for this step.
     /// </summary>
     private List<ProgressInfo<TContext>> ProgressInfos => _progressInfos ??= [];
-
-    /// <inheritdoc/>
-    public override bool IsHidden { get; } = isHidden;
 
     IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => ((IHasProgress<TContext>?)_progressInfos?.LastOrDefault())?.SelfOrLastChild ?? this;
 
