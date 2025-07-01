@@ -13,6 +13,11 @@ namespace Spectre.Builder;
 public interface IStep<TContext> : IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <summary>
+    /// Gets a value indicating whether the step is hidden.
+    /// </summary>
+    bool IsHidden { get; }
+
+    /// <summary>
     /// Prepares the step for execution by setting its position in the progress hierarchy.
     /// </summary>
     /// <param name="context">The context for the step preparation.</param>

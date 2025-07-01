@@ -45,7 +45,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
             throw new InvalidOperationException("Cannot add progress before running the context.");
         }
 
-        if (!progress.IsHidden)
+        if (progress is not IStep<TContext> { IsHidden: true })
         {
             ProgressTask task = insertAfter is null
                 ? _spectreContext.AddTask("not used", autoStart: false, maxValue: double.PositiveInfinity)

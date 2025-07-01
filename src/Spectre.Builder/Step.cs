@@ -40,7 +40,7 @@ public abstract class Step<TContext> : IStep<TContext> where TContext : class, I
     public static ParallelStep<TContext> Parallel(string name, IEnumerable<IStep<TContext>> steps, Func<CompoundStep<TContext>, TContext, CancellationToken, Task>? createStepsAsync = null, ParallelOptions? options = null) => new ParallelStepImpl(name, steps, createStepsAsync, options ?? new ParallelOptions());
 
     /// <inheritdoc/>
-    bool IHasProgress<TContext>.IsHidden => false;
+    bool IStep<TContext>.IsHidden => false;
 
     /// <inheritdoc/>
     IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => this;

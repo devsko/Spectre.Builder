@@ -9,9 +9,6 @@ namespace Spectre.Builder;
 public class ProgressInfo<TContext>(string name) : IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <inheritdoc/>
-    bool IHasProgress<TContext>.IsHidden => false;
-
-    /// <inheritdoc/>
     IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => this;
 
     /// <summary>
