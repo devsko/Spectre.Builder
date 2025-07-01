@@ -7,12 +7,12 @@ using Spectre.Console;
 namespace Spectre.Builder;
 
 /// <summary>
-/// Provides context and progress management for executing steps with status reporting.
+/// Represents the base class for a builder context that manages progress tracking and execution of steps.
 /// </summary>
 /// <typeparam name="TContext">
-/// The type of the builder context, which must implement <see cref="BuilderContext{TContext}"/>.
+/// The type of the derived builder context. This must inherit from <see cref="BuilderContext{TContext}"/>.
 /// </typeparam>
-public partial class BuilderContext<TContext> where TContext : BuilderContext<TContext>
+public abstract partial class BuilderContext<TContext> where TContext : BuilderContext<TContext>
 {
     private readonly object _lock = new();
     private readonly Dictionary<int, (IHasProgress<TContext>, int)> _progressById = [];
@@ -29,7 +29,7 @@ public partial class BuilderContext<TContext> where TContext : BuilderContext<TC
     /// <exception cref="InvalidOperationException">
     /// Thrown if the current instance does not match the generic type parameter <typeparamref name="TContext"/>.
     /// </exception>
-    public BuilderContext(CancellationToken cancellationToken)
+    protected BuilderContext(CancellationToken cancellationToken)
     {
         if (this is not TContext)
         {
