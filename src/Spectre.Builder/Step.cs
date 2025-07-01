@@ -9,7 +9,7 @@ namespace Spectre.Builder;
 /// <typeparam name="TContext">
 /// The type of the builder context used for step execution. Must inherit from <see cref="BuilderContext{TContext}"/>.
 /// </typeparam>
-public abstract class Step<TContext> : IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
+public abstract class Step<TContext> : IHasProgress<TContext> where TContext : BuilderContext<TContext>
 {
     private sealed class SequentialStepImpl(string name, IEnumerable<Step<TContext>> steps, Func<CompoundStep<TContext>, TContext, CancellationToken, Task>? createStepsAsync) : SequentialStep<TContext>(steps, createStepsAsync)
     {

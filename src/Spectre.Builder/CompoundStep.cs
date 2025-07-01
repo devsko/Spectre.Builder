@@ -8,7 +8,7 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents a step that contains multiple sub-steps and progress information.
 /// </summary>
-public abstract class CompoundStep<TContext>(IEnumerable<Step<TContext>> steps, Func<CompoundStep<TContext>, TContext, CancellationToken, Task>? createStepsAsync) : Step<TContext>, IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
+public abstract class CompoundStep<TContext>(IEnumerable<Step<TContext>> steps, Func<CompoundStep<TContext>, TContext, CancellationToken, Task>? createStepsAsync) : Step<TContext>, IHasProgress<TContext> where TContext : BuilderContext<TContext>
 {
     private readonly List<Step<TContext>> _steps = [.. steps.Where(step => !step.IsHidden)];
     private bool _allStepsSkipped = true;

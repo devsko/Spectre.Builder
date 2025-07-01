@@ -6,7 +6,7 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents a compound step that executes its child steps in parallel.
 /// </summary>
-public abstract class ParallelStep<TContext>(IEnumerable<Step<TContext>> steps, Func<CompoundStep<TContext>, TContext, CancellationToken, Task>? createStepsAsync) : CompoundStep<TContext>(steps, createStepsAsync) where TContext : class, IBuilderContext<TContext>
+public abstract class ParallelStep<TContext>(IEnumerable<Step<TContext>> steps, Func<CompoundStep<TContext>, TContext, CancellationToken, Task>? createStepsAsync) : CompoundStep<TContext>(steps, createStepsAsync) where TContext : BuilderContext<TContext>
 {
     /// <summary>
     /// Executes the child steps in parallel using the specified <see cref="ParallelOptions"/>.

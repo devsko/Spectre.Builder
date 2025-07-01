@@ -6,7 +6,7 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents progress information for a step, providing context for progress tracking.
 /// </summary>
-public class ProgressInfo<TContext>(string name) : IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
+public class ProgressInfo<TContext>(string name) : IHasProgress<TContext> where TContext : BuilderContext<TContext>
 {
     /// <inheritdoc/>
     ProgressType IHasProgress<TContext>.Type => ProgressType.ValueRaw;

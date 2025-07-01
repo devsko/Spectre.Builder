@@ -6,7 +6,7 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents an item that exposes progress information.
 /// </summary>
-public interface IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
+public interface IHasProgress<TContext> where TContext : BuilderContext<TContext>
 {
     /// <summary>
     /// Gets the type of progress.

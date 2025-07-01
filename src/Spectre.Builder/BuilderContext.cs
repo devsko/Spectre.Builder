@@ -9,7 +9,10 @@ namespace Spectre.Builder;
 /// <summary>
 /// Provides context and progress management for executing steps with status reporting.
 /// </summary>
-public partial class BuilderContext<TContext> : IBuilderContext<TContext> where TContext : class, IBuilderContext<TContext>
+/// <typeparam name="TContext">
+/// The type of the builder context, which must implement <see cref="BuilderContext{TContext}"/>.
+/// </typeparam>
+public partial class BuilderContext<TContext> where TContext : BuilderContext<TContext>
 {
     private readonly object _lock = new();
     private readonly Dictionary<int, (IHasProgress<TContext>, int)> _progressById = [];
@@ -36,7 +39,16 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
         _cancellationToken = cancellationToken;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Adds a progress item to the builder context at the specified nesting level.
+    /// </summary>
+    /// <param name="progress">The progress item to add.</param>
+    /// <param name="insertAfter">
+    /// The progress item after which the new item should be inserted. 
+    /// If null, the new item is added at the end.
+    /// </param>
+    /// <param name="level">The nesting level of the progress item.</param>
+    /// <returns>The added progress item.</returns>
     public IHasProgress<TContext> Add(IHasProgress<TContext> progress, IHasProgress<TContext>? insertAfter, int level)
     {
         ArgumentNullException.ThrowIfNull(progress);
@@ -60,13 +72,23 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
         return progress;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Retrieves the nesting level of the specified progress item.
+    /// </summary>
+    /// <param name="progress">The progress item whose level is to be retrieved.</param>
+    /// <returns>The nesting level of the specified progress item.</returns>
     public int GetLevel(IHasProgress<TContext> progress)
     {
         return _progressById[(GetTask(progress) ?? throw new KeyNotFoundException()).Id].Item2;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Retrieves the progress information and its associated nesting level for a given identifier.
+    /// </summary>
+    /// <param name="id">The identifier of the progress item.</param>
+    /// <returns>
+    /// A tuple containing the <see cref="IHasProgress{TContext}"/> instance and its nesting level.
+    /// </returns>
     public (IHasProgress<TContext>, int) GetProgressAndLevel(int id)
     {
         lock (_lock)
@@ -75,19 +97,31 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Sets the total value for the specified progress item.
+    /// </summary>
+    /// <param name="progress">The progress item to update.</param>
+    /// <param name="total">The total value to set.</param>
     public void SetTotal(IHasProgress<TContext> progress, long total)
     {
         (GetTask(progress) ?? throw new KeyNotFoundException()).MaxValue = total;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Sets the current progress value for the specified progress item.
+    /// </summary>
+    /// <param name="progress">The progress item to update.</param>
+    /// <param name="value">The progress value to set.</param>
     public void SetProgress(IHasProgress<TContext> progress, long value)
     {
         (GetTask(progress) ?? throw new KeyNotFoundException()).Value = value;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Increments the progress value for the specified progress item by the given amount.
+    /// </summary>
+    /// <param name="progress">The progress item to update.</param>
+    /// <param name="amount">The amount to increment the progress by. Defaults to 1.</param>
     public void IncrementProgress(IHasProgress<TContext> progress, long amount = 1)
     {
         (GetTask(progress) ?? throw new KeyNotFoundException()).Increment(amount);
@@ -147,7 +181,14 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
             }).ConfigureAwait(false);
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Executes the specified step asynchronously within the context.
+    /// </summary>
+    /// <param name="step">The step to execute.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A <see cref="Task"/> representing the asynchronous execution of the step.
+    /// </returns>
     public async Task ExecuteAsync(Step<TContext> step, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(step);
@@ -161,7 +202,11 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
         // Failed?
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Marks the specified step as failed and records the associated error message.
+    /// </summary>
+    /// <param name="step">The step that failed.</param>
+    /// <param name="error">The error message describing the failure.</param>
     public void Fail(Step<TContext> step, string error)
     {
         lock (_lock)
@@ -170,7 +215,10 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Ensures that the context is in a valid state for further execution.
+    /// Throws an exception if the context is invalid.
+    /// </summary>
     public void EnsureValid()
     {
         if (_errors.Count > 0)

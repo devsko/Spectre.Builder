@@ -6,7 +6,7 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents an abstract step that performs a conversion operation with progress tracking.
 /// </summary>
-public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] outputs) : Step<TContext>, IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
+public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] outputs) : Step<TContext>, IHasProgress<TContext> where TContext : BuilderContext<TContext>
 {
     private List<ProgressInfo<TContext>>? _progressInfos;
 
