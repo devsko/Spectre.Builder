@@ -60,14 +60,6 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
         return progress;
     }
 
-    private ProgressTask? GetTask(IHasProgress<TContext> progress)
-    {
-        lock (_lock)
-        {
-            return _consoleTasks.TryGetValue(progress, out ProgressTask? task) ? task : null;
-        }
-    }
-
     /// <inheritdoc/>
     public int GetLevel(IHasProgress<TContext> progress)
     {
@@ -187,6 +179,14 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
             {
                 throw new InvalidOperationException(string.Join(Environment.NewLine, _errors.Select(e => e.Item2)));
             }
+        }
+    }
+
+    private ProgressTask? GetTask(IHasProgress<TContext> progress)
+    {
+        lock (_lock)
+        {
+            return _consoleTasks.TryGetValue(progress, out ProgressTask? task) ? task : null;
         }
     }
 }

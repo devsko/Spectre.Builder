@@ -9,11 +9,6 @@ namespace Spectre.Builder;
 public interface IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <summary>
-    /// Gets the name of the progress item.
-    /// </summary>
-    string GetName(TContext context);
-
-    /// <summary>
     /// Gets the type of progress.
     /// </summary>
     ProgressType Type { get; }
@@ -27,4 +22,9 @@ public interface IHasProgress<TContext> where TContext : class, IBuilderContext<
     /// Gets the last progress item in the hierarchy, including itself or its children.
     /// </summary>
     IHasProgress<TContext> SelfOrLastChild { get; }
+
+    /// <summary>
+    /// Gets the name of the progress item.
+    /// </summary>
+    string GetName(TContext context);
 }

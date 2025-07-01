@@ -23,7 +23,7 @@ public abstract class CompoundStep<TContext>(IEnumerable<Step<TContext>> steps, 
     /// <summary>
     /// Gets the type of progress for this step.
     /// </summary>
-    public virtual ProgressType Type => ProgressType.NumericStep;
+    public override ProgressType Type => ProgressType.NumericStep;
 
     /// <summary>
     /// Adds a sub-step to the compound step and updates the context with the total number of steps.
@@ -43,23 +43,6 @@ public abstract class CompoundStep<TContext>(IEnumerable<Step<TContext>> steps, 
         StepsToExecute.Writer.TryWrite(step);
 
         context.SetTotal(this, _steps.Count);
-    }
-
-    /// <summary>
-    /// Executes a single sub-step asynchronously.
-    /// </summary>
-    /// <param name="step">The sub-step to execute.</param>
-    /// <param name="context">The context in which the step is being executed.</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    protected async ValueTask ExecuteStepAsync(Step<TContext> step, TContext context, CancellationToken cancellationToken)
-    {
-        await context.ExecuteAsync(step, cancellationToken).ConfigureAwait(false);
-        _allStepsSkipped &= step.IsHidden || step.State is ProgressState.Skip;
-        if (!step.IsHidden)
-        {
-            context.IncrementProgress(this);
-        }
     }
 
     /// <inheritdoc/>
@@ -104,4 +87,21 @@ public abstract class CompoundStep<TContext>(IEnumerable<Step<TContext>> steps, 
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     protected abstract Task ExecuteStepsAsync(TContext context, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Executes a single sub-step asynchronously.
+    /// </summary>
+    /// <param name="step">The sub-step to execute.</param>
+    /// <param name="context">The context in which the step is being executed.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    protected async ValueTask ExecuteStepAsync(Step<TContext> step, TContext context, CancellationToken cancellationToken)
+    {
+        await context.ExecuteAsync(step, cancellationToken).ConfigureAwait(false);
+        _allStepsSkipped &= step.IsHidden || step.State is ProgressState.Skip;
+        if (!step.IsHidden)
+        {
+            context.IncrementProgress(this);
+        }
+    }
 }

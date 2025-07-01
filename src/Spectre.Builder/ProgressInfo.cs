@@ -9,16 +9,14 @@ namespace Spectre.Builder;
 public class ProgressInfo<TContext>(string name) : IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
 {
     /// <inheritdoc/>
-    IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => this;
-
-    /// <summary>
-    /// Gets the name of the progress information.
-    /// </summary>
-    public string GetName(TContext context) => name;
-
-    /// <inheritdoc/>
     ProgressType IHasProgress<TContext>.Type => ProgressType.ValueRaw;
 
     /// <inheritdoc/>
     ProgressState IHasProgress<TContext>.State => ProgressState.Running;
+
+    /// <inheritdoc/>
+    IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => this;
+
+    /// <inheritdoc/>
+    string IHasProgress<TContext>.GetName(TContext context) => name;
 }
