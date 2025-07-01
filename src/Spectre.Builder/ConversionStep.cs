@@ -6,7 +6,7 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents an abstract step that performs a conversion operation with progress tracking.
 /// </summary>
-public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] outputs) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
+public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] outputs, bool isHidden = false) : Step<TContext>, IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
 {
     private List<ProgressInfo<TContext>>? _progressInfos;
 
@@ -16,7 +16,7 @@ public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] o
     private List<ProgressInfo<TContext>> ProgressInfos => _progressInfos ??= [];
 
     /// <inheritdoc/>
-    public bool IsHidden { get; set; }
+    public override bool IsHidden { get; } = isHidden;
 
     IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => ((IHasProgress<TContext>?)_progressInfos?.LastOrDefault())?.SelfOrLastChild ?? this;
 
@@ -36,7 +36,7 @@ public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] o
     protected virtual bool ShowProgressAsDataSize => true;
 
     /// <inheritdoc/>
-    IHasProgress<TContext> IStep<TContext>.Prepare(TContext context, IHasProgress<TContext>? insertAfter, int level)
+    protected internal override IHasProgress<TContext> Prepare(TContext context, IHasProgress<TContext>? insertAfter, int level)
     {
         context.Add(this, insertAfter, level);
         OnPrepared(context);
@@ -45,7 +45,7 @@ public abstract class ConversionStep<TContext>(IResource[] inputs, IResource[] o
     }
 
     /// <inheritdoc/>
-    async Task IStep<TContext>.ExecuteAsync(TContext context, CancellationToken cancellationToken)
+    protected internal override async Task ExecuteAsync(TContext context, CancellationToken cancellationToken)
     {
         foreach (IResource resource in inputs.Concat(outputs))
         {

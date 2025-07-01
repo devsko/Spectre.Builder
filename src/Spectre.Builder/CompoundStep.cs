@@ -8,17 +8,17 @@ namespace Spectre.Builder;
 /// <summary>
 /// Represents a step that contains multiple sub-steps and progress information.
 /// </summary>
-public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps, Func<CompoundStep<TContext>, TContext, CancellationToken, Task>? createStepsAsync) : Step<TContext>, IStep<TContext> where TContext : class, IBuilderContext<TContext>
+public abstract class CompoundStep<TContext>(IEnumerable<Step<TContext>> steps, Func<CompoundStep<TContext>, TContext, CancellationToken, Task>? createStepsAsync) : Step<TContext>, IHasProgress<TContext> where TContext : class, IBuilderContext<TContext>
 {
-    private readonly List<IStep<TContext>> _steps = [.. steps.Where(step => !step.IsHidden)];
+    private readonly List<Step<TContext>> _steps = [.. steps.Where(step => !step.IsHidden)];
     private bool _allStepsSkipped = true;
 
     /// <summary>
     /// Gets the channel used to manage the execution of sub-steps.
     /// </summary>
-    protected Channel<IStep<TContext>> StepsToExecute { get; } = Channel.CreateUnbounded<IStep<TContext>>();
+    protected Channel<Step<TContext>> StepsToExecute { get; } = Channel.CreateUnbounded<Step<TContext>>();
 
-    IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => _steps.LastOrDefault()?.SelfOrLastChild ?? this;
+    IHasProgress<TContext> IHasProgress<TContext>.SelfOrLastChild => ((IHasProgress<TContext>?)_steps.LastOrDefault())?.SelfOrLastChild ?? this;
 
     /// <summary>
     /// Gets the type of progress for this step.
@@ -30,7 +30,7 @@ public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps,
     /// </summary>
     /// <param name="step">The sub-step to add.</param>
     /// <param name="context">The context in which the step is being executed.</param>
-    public void Add(IStep<TContext> step, TContext context)
+    public void Add(Step<TContext> step, TContext context)
     {
         step.Prepare(context, ((IHasProgress<TContext>?)this)?.SelfOrLastChild, context.GetLevel(this) + 1);
 
@@ -52,7 +52,7 @@ public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps,
     /// <param name="context">The context in which the step is being executed.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    protected async ValueTask ExecuteStepAsync(IStep<TContext> step, TContext context, CancellationToken cancellationToken)
+    protected async ValueTask ExecuteStepAsync(Step<TContext> step, TContext context, CancellationToken cancellationToken)
     {
         await context.ExecuteAsync(step, cancellationToken).ConfigureAwait(false);
         _allStepsSkipped &= step.IsHidden || step.State is ProgressState.Skip;
@@ -63,11 +63,11 @@ public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps,
     }
 
     /// <inheritdoc/>
-    IHasProgress<TContext> IStep<TContext>.Prepare(TContext context, IHasProgress<TContext>? insertAfter, int level)
+    protected internal override IHasProgress<TContext> Prepare(TContext context, IHasProgress<TContext>? insertAfter, int level)
     {
         insertAfter = context.Add(this, insertAfter, level);
 
-        foreach (IStep<TContext> step in steps)
+        foreach (Step<TContext> step in steps)
         {
             insertAfter = step.Prepare(context, insertAfter, level + 1);
             StepsToExecute.Writer.TryWrite(step);
@@ -77,7 +77,7 @@ public abstract class CompoundStep<TContext>(IEnumerable<IStep<TContext>> steps,
     }
 
     /// <inheritdoc/>
-    async Task IStep<TContext>.ExecuteAsync(TContext context, CancellationToken cancellationToken)
+    protected internal override async Task ExecuteAsync(TContext context, CancellationToken cancellationToken)
     {
         State = ProgressState.Running;
         context.SetTotal(this, _steps.Count);

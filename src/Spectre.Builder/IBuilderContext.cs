@@ -49,14 +49,14 @@ public interface IBuilderContext<TContext> where TContext : class, IBuilderConte
     /// <returns>
     /// A <see cref="Task"/> representing the asynchronous execution of the step.
     /// </returns>
-    Task ExecuteAsync(IStep<TContext> step, CancellationToken cancellationToken);
+    Task ExecuteAsync(Step<TContext> step, CancellationToken cancellationToken);
 
     /// <summary>
     /// Marks the specified step as failed and records the associated error message.
     /// </summary>
     /// <param name="step">The step that failed.</param>
     /// <param name="error">The error message describing the failure.</param>
-    void Fail(IStep<TContext> step, string error);
+    void Fail(Step<TContext> step, string error);
 
     /// <summary>
     /// Ensures that the context is in a valid state for further execution.

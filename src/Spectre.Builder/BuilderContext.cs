@@ -14,7 +14,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     private readonly object _lock = new();
     private readonly Dictionary<int, (IHasProgress<TContext>, int)> _progressById = [];
     private readonly Dictionary<IHasProgress<TContext>, ProgressTask> _consoleTasks = [];
-    private readonly List<(IStep<TContext>, string)> _errors = [];
+    private readonly List<(Step<TContext>, string)> _errors = [];
     private readonly CancellationToken _cancellationToken;
     private ProgressContext? _spectreContext;
 
@@ -45,7 +45,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
             throw new InvalidOperationException("Cannot add progress before running the context.");
         }
 
-        if (progress is not IStep<TContext> { IsHidden: true })
+        if (progress is not Step<TContext> { IsHidden: true })
         {
             ProgressTask task = insertAfter is null
                 ? _spectreContext.AddTask("not used", autoStart: false, maxValue: double.PositiveInfinity)
@@ -108,7 +108,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     /// <param name="step">The step to execute.</param>
     /// <param name="status">An array of status information to track during execution.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task RunAsync(IStep<TContext> step, StatusInfo<TContext>[] status)
+    public async Task RunAsync(Step<TContext> step, StatusInfo<TContext>[] status)
     {
         ArgumentNullException.ThrowIfNull(step);
         ArgumentNullException.ThrowIfNull(status);
@@ -156,7 +156,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     }
 
     /// <inheritdoc/>
-    public async Task ExecuteAsync(IStep<TContext> step, CancellationToken cancellationToken)
+    public async Task ExecuteAsync(Step<TContext> step, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(step);
 
@@ -170,7 +170,7 @@ public partial class BuilderContext<TContext> : IBuilderContext<TContext> where 
     }
 
     /// <inheritdoc/>
-    public void Fail(IStep<TContext> step, string error)
+    public void Fail(Step<TContext> step, string error)
     {
         lock (_lock)
         {
