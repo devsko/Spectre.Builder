@@ -18,25 +18,21 @@ public abstract partial class BuilderContext<TContext> where TContext : BuilderC
     private readonly Dictionary<int, (IHasProgress<TContext>, int)> _progressById = [];
     private readonly Dictionary<IHasProgress<TContext>, ProgressTask> _consoleTasks = [];
     private readonly List<(Step<TContext>, string)> _errors = [];
-    private readonly CancellationToken _cancellationToken;
     private ProgressContext? _spectreContext;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BuilderContext{TContext}"/> class
     /// with the specified cancellation token.
     /// </summary>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <exception cref="InvalidOperationException">
     /// Thrown if the current instance does not match the generic type parameter <typeparamref name="TContext"/>.
     /// </exception>
-    protected BuilderContext(CancellationToken cancellationToken)
+    protected BuilderContext()
     {
         if (this is not TContext)
         {
             throw new InvalidOperationException();
         }
-
-        _cancellationToken = cancellationToken;
     }
 
     /// <summary>
@@ -133,8 +129,9 @@ public abstract partial class BuilderContext<TContext> where TContext : BuilderC
     /// </summary>
     /// <param name="step">The step to execute.</param>
     /// <param name="status">An array of status information to track during execution.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task RunAsync(Step<TContext> step, StatusInfo<TContext>[] status)
+    public async Task RunAsync(Step<TContext> step, StatusInfo<TContext>[] status, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(step);
         ArgumentNullException.ThrowIfNull(status);
@@ -172,7 +169,7 @@ public abstract partial class BuilderContext<TContext> where TContext : BuilderC
                     }
                 });
 
-                await ExecuteAsync(step, _cancellationToken).ConfigureAwait(false);
+                await ExecuteAsync(step, cancellationToken).ConfigureAwait(false);
                 await setStatus.ConfigureAwait(false);
 
                 ctx.Refresh();

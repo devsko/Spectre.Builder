@@ -113,7 +113,7 @@ public partial class BuilderContext<TContext>
         /// <inheritdoc/>
         protected override IRenderable Render(RenderOptions options, ProgressTask task, IHasProgress<TContext> step, int level, TimeSpan deltaTime)
         {
-            if ((step.State is ProgressState.Running or ProgressState.Done || step is StatusInfo<TContext>))
+            if (step.State is not ProgressState.Skip)
             {
                 Markup result;
                 switch (step.Type & ProgressType.ValueMask)
@@ -121,32 +121,56 @@ public partial class BuilderContext<TContext>
                     case ProgressType.ValueDataSize:
                         {
                             DataSize? total = double.IsPositiveInfinity(task.MaxValue) ? null : new((int)task.MaxValue);
-                            DataSize value = total is null ? new((int)task.Value) : new((int)task.Value, total.Value.Unit);
-                            string suffix = total is null ? value.Suffix : total.Value.Suffix;
+                            if (step.State is ProgressState.Wait)
+                            {
+                                if (total is null)
+                                {
+                                    break;
+                                }
+                                result = new Markup($"{total.Value.Format()} [grey]{total.Value.Suffix}[/]");
+                            }
+                            else
+                            {
+                                DataSize value = total is null ? new((int)task.Value) : new((int)task.Value, total.Value.Unit);
+                                string suffix = total is null ? value.Suffix : total.Value.Suffix;
 
-                            result = step.State is ProgressState.Done or ProgressState.Skip
-                                ? new Markup($"{value.Format()} [grey]{suffix}[/]")
-                                : new Markup($"{(total is null ? value.Format() : $"{value.Format()}[grey]/[/]{total.Value.Format()}")} [grey]{suffix}[/]");
+                                result = step.State is ProgressState.Done
+                                    ? new Markup($"{value.Format()} [grey]{suffix}[/]")
+                                    : new Markup($"{(total is null ? value.Format() : $"{value.Format()}[grey]/[/]{total.Value.Format()}")} [grey]{suffix}[/]");
+                            }
                         }
                         return result.RightJustified();
                     case ProgressType.ValueRaw:
                         {
-                            if (step.State is ProgressState.Done or ProgressState.Skip)
+                            if (step.State is ProgressState.Done)
                             {
                                 result = new Markup($"{(long)task.Value:N0}");
                             }
                             else
                             {
                                 long? total = double.IsPositiveInfinity(task.MaxValue) ? null : (long)task.MaxValue;
-                                result = new Markup(total is null ? $"{(long)task.Value:N0}" : $"{(long)task.Value:N0}[grey]/[/]{total.Value:N0}");
+                                if (step.State is ProgressState.Wait)
+                                {
+                                    if (total is null)
+                                    {
+                                        break;
+                                    }
+                                    result = new Markup($"{total.Value:N0}");
+                                }
+                                else
+                                {
+                                    result = new Markup(total is null ? $"{(long)task.Value:N0}" : $"{(long)task.Value:N0}[grey]/[/]{total.Value:N0}");
+                                }
                             }
                         }
                         return result.RightJustified();
                     case ProgressType.ValueTimeSpan:
+                        if (step.State is ProgressState.Wait)
                         {
-                            result = new Markup(new TimeSpan((long)task.Value).ToString("hh\\:mm\\:ss"));
+                            break;
                         }
-                        return result.RightJustified();
+
+                        return new Markup(new TimeSpan((long)task.Value).ToString("hh\\:mm\\:ss")).RightJustified();
                 }
             }
 
