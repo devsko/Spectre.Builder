@@ -97,10 +97,13 @@ public abstract class CompoundStep<TContext>(IEnumerable<Step<TContext>> steps, 
     /// <returns>A task representing the asynchronous operation.</returns>
     protected async ValueTask ExecuteStepAsync(Step<TContext> step, TContext context, CancellationToken cancellationToken)
     {
+        bool isHidden = step.IsHidden;
+
         await context.ExecuteAsync(step, cancellationToken).ConfigureAwait(false);
-        _allStepsSkipped &= step.IsHidden || step.State is ProgressState.Skip;
-        if (!step.IsHidden)
+
+        if (!isHidden)
         {
+            _allStepsSkipped &= step.State is ProgressState.Skip;
             context.IncrementProgress(this);
         }
     }
