@@ -41,6 +41,12 @@ public class FileResource(string path) : IResource
         }
     }
 
+    /// <summary>
+    /// Gets the length of the file resource in bytes.
+    /// Returns null if the file does not exist.
+    /// </summary>
+    public long? Length => _file.Exists ? _file.Length : null;
+
     /// <inheritdoc/>
     Task IResource.DetermineAvailabilityAsync(CancellationToken cancellationToken)
     {
